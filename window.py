@@ -1,70 +1,89 @@
-from PyQt5 import QtWidgets
-from PyQt5.QtWidgets import QMainWindow, QPushButton
-from PyQt5.QtCore import Qt
-
-from media import Media
+from PyQt6.QtWidgets import (
+    QMainWindow, QWidget, QVBoxLayout, QScrollArea, QLabel,
+    QComboBox, QSizePolicy, QGridLayout, QPushButton
+)
+from PyQt6.QtGui import QPixmap, QFont
+from PyQt6.QtCore import Qt
+from PIL.ImageQt import ImageQt
 
 class MediaButton(QPushButton):
-    def __init__(self, media: Media):
+    def __init__(self, media):
         super().__init__()
-        self.setText(media.name)
         self.media = media
+
+        self.setFixedSize(150, 250)
+        self.setStyleSheet("border: none;")
+
+        layout = QVBoxLayout(self)
+        layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.setContentsMargins(0, 0, 0, 0)
+
+        # Convert PIL image to QPixmap
+        qt_image = ImageQt(self.media.image.copy())
+        pixmap = QPixmap.fromImage(qt_image).scaled(150, 220, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+
+        image_label = QLabel()
+        image_label.setPixmap(pixmap)
+        image_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        name_label = QLabel(media.name)
+        name_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        name_label.setWordWrap(True)
+        name_label.setStyleSheet("font-size: 13px;")
+
+        layout.addWidget(image_label)
+        layout.addWidget(name_label)
+
+        self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
+
         self.clicked.connect(self.media.play)
 
 class MainGUIWindow(QMainWindow):
-    def __init__(self, movie_list=None, show_list=None):
+    def __init__(self, show_list, movie_list):
         super().__init__()
-        self.movie_list = movie_list or []
-        self.show_list = show_list or []
-        self.initUI()
+        self.setWindowTitle("Media Browser")
+        self.setGeometry(100, 100, 1000, 800)
 
-    def initUI(self):
-        self.setWindowTitle("Movie Viewer")
-        self.setGeometry(100, 100, 1270, 720)
+        self.show_list = show_list
+        self.movie_list = movie_list
 
-        self.make_movie_scroll_area()
-        self.make_show_scroll_area()
-    
-    def make_show_scroll_area(self):
-        self.show_form_layout = QtWidgets.QFormLayout(self)
+        central_widget = QWidget()
+        self.setCentralWidget(central_widget)
+        outer_layout = QVBoxLayout(central_widget)
+        outer_layout.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter)
 
-        self.show_group_box = QtWidgets.QGroupBox(self)
-        self.show_group_box.setGeometry(635, 0, 635, 600)
-        self.show_group_box.setTitle("Show List")
+        self.combo_box = QComboBox()
+        self.combo_box.addItems(["Movies", "Shows"])
+        self.combo_box.setFixedWidth(690)
+        self.combo_box.setFont(QFont("Arial", 14))
+        self.combo_box.setStyleSheet("padding: 6px;")
+        self.combo_box.currentIndexChanged.connect(self.update_display)
+        outer_layout.addWidget(self.combo_box)
 
-        self.show_buttons = []
-        for show in self.show_list:
-            button = self.create_media_button(show)
-            self.show_form_layout.addWidget(button)
+        self.scroll_area = QScrollArea()
+        self.scroll_area.setFixedWidth(690)
+        self.scroll_area.setWidgetResizable(True)
+        outer_layout.addWidget(self.scroll_area)
 
-        self.show_group_box.setLayout(self.show_form_layout)
+        self.scroll_content = QWidget()
+        self.grid_layout = QGridLayout(self.scroll_content)
+        self.grid_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        self.grid_layout.setHorizontalSpacing(20)
+        self.grid_layout.setVerticalSpacing(20)
+        self.scroll_area.setWidget(self.scroll_content)
 
-        self.show_scroll_area = QtWidgets.QScrollArea(self)
-        self.show_scroll_area.setWidgetResizable(True)
-        self.show_scroll_area.setGeometry(635, 60, 635, 600)
-        self.show_scroll_area.setWidget(self.show_group_box)
+        self.update_display()
 
-    def make_movie_scroll_area(self):
-        self.movie_form_layout = QtWidgets.QFormLayout(self)
+    def update_display(self):
+        while self.grid_layout.count():
+            item = self.grid_layout.takeAt(0)
+            if item.widget():
+                item.widget().deleteLater()
 
-        self.movie_group_box = QtWidgets.QGroupBox(self)
-        self.movie_group_box.setGeometry(0, 0, 635, 600)
-        self.movie_group_box.setTitle("Movie List")
+        current_list = self.show_list if self.combo_box.currentText() == "Shows" else self.movie_list
 
-        self.movie_buttons = []
-        for movie in self.movie_list:
-            button = self.create_media_button(movie)
-            self.movie_form_layout.addWidget(button)
-        
-        self.movie_group_box.setLayout(self.movie_form_layout)
-
-        self.movie_scroll_area = QtWidgets.QScrollArea(self)
-        self.movie_scroll_area.setWidgetResizable(True)
-        self.movie_scroll_area.setGeometry(0, 60, 635, 600)
-        self.movie_scroll_area.setWidget(self.movie_group_box)
-
-    def create_media_button(self, media):
-        button = MediaButton(media)
-        button.setGeometry(0, 0, 635, 50)
-        self.movie_buttons.append(button)
-        return button
+        for idx, media in enumerate(current_list):
+            button = MediaButton(media)
+            row = idx // 4
+            col = idx % 4
+            self.grid_layout.addWidget(button, row, col)

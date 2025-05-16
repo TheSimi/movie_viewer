@@ -8,12 +8,16 @@ This script makes an easy to use GUI for navigating all your movie files
 
 ### Configuration
 
-The script or .exe file needs to have a file in the same folder `path.txt`. In that file there needs to be paths for your movie folders, each path in a different line. The script will search for movies in those folders only
+The script or .exe file needs to have a .env file configured, example can be found as .env.example
 
 ### File names
 
 The script will scan all the configured folders and make a list of all files in them. If you have a movie that is made of more than one file put it in a folder and have the folder name start with a "-"
 Example: `-memento`
+
+### Cache
+
+The script will save cache of the movies and shows you have in the configured cache dir, to make loading the program next time a lot faster.
 
 ### Usage
 

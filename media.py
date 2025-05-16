@@ -6,8 +6,8 @@ import imdb
 import io
 import requests
 import json
+import re
 from PIL import Image
-from uuid import uuid4
 
 from const import MEDIA_PLAYER, CACHE_DIR
 from errors import MediaNotFoundError, PosterNotFoundError
@@ -137,7 +137,22 @@ class Show(Media):
         for file in os.listdir(self.path):
             if os.path.isfile(os.path.join(self.path, file)):
                 episode_list.append(file)
+        episode_list.sort(key=self.comapare_episodes)
+        print(f"Episode list: {episode_list}")
         return episode_list
+    
+    @staticmethod
+    def comapare_episodes(episode_name: str):
+        episode_name = episode_name.split('.')[0]
+        episode_list = re.findall(r'\D+|\d+', episode_name)
+        episode_digit_list = []
+        for episode in episode_list:
+            if episode.isdigit():
+                episode_digit_list.append(episode)
+        episode_digit = ''.join(episode_digit_list)
+        if episode_digit == 0:
+            return -1
+        return int(episode_digit)
     
     def play(self):
         if not os.path.exists(os.path.join(self.path, "watched")):

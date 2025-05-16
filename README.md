@@ -22,7 +22,3 @@ The script will save cache of the movies and shows you have in the configured ca
 ### Usage
 
 Just run the script and press any movie from the list to instantly open it on VLC or open the folder where the movies parts are saved
-
-## Dependecies
-
-- VLC Media Player

@@ -3,9 +3,7 @@ import pickle
 from media import Media
 
 from const import CACHE_DIR
-
-def cache_path(path: str):
-    return os.path.join(CACHE_DIR, "+".join(path.split(os.sep)))
+from cache_utilis import cache_path
 
 def get_file_list(folder_list: list, file_in_folder_func: callable, file_class: Media):
     file_path_list = []

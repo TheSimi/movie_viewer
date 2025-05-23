@@ -1,4 +1,4 @@
 pip install -r requirements.txt
 pip install pyinstaller
 
-pyinstaller --onedir --name "movie_viewer" main.py
+pyinstaller --onedir -n "movie_viewer" --windowed --icon="assets\icon.ico" main.py

@@ -9,6 +9,7 @@ import json
 import re
 from PIL import Image
 
+from cache_utilis import cache_path
 from const import MEDIA_PLAYER, CACHE_DIR
 from errors import MediaNotFoundError, PosterNotFoundError
 
@@ -16,14 +17,13 @@ class Media(abc.ABC):
     def __init__(self):
         pass
 
-    def get_media_from_imdb(self, search: str):
-        self.cinemagoer = imdb.Cinemagoer()
-        search_result = self.cinemagoer.search_movie(search)
+    def init_media_from_imdb(self, search: str) -> None:
+        cinemagoer = imdb.Cinemagoer()
+        search_result = cinemagoer.search_movie(search)
         if not search_result:
             raise MediaNotFoundError(f"Media '{search}' not found in IMDb.")
         self.media = search_result[0]
-        self.cinemagoer.update(self.media)
-        return self.media.get('title')
+        cinemagoer.update(self.media)
 
     def get_image(self):
         poster_url = self.media.get('cover url')
@@ -35,7 +35,7 @@ class Media(abc.ABC):
     
     @property
     def cache_path(self):
-        return os.path.join(CACHE_DIR, "+".join(self.path.split(os.sep)))
+        return cache_path(self.path)
     
     @abc.abstractmethod
     def play(self):
@@ -52,18 +52,15 @@ class Media(abc.ABC):
 
 class Movie(Media):
     def __init__(
-            self, path: str,
-            name: str = None,
-            is_file: bool = None,
-            image: Image = None,
-            from_cache: bool = False
+            self,
+            path: str,
+            from_cache: bool = False,
+            **kwargs
         ):
         self.path = path
 
         if from_cache:
-            self.name = name
-            self.is_file = is_file
-            self.image = image
+            self._init_from_cache(**kwargs)
             return
 
         if os.path.isfile(path):
@@ -73,10 +70,17 @@ class Movie(Media):
             self.is_file = False
             search = os.path.basename(path)[1:]
         
-        self.name = self.get_media_from_imdb(search)
-        print(f"Movie name: {self.name}")
+        self.init_media_from_imdb(search)
+        self.name = self.media.get('original title')
+        self.rating = self.media.get('rating')
+        print(f"Movie name: {self.name} Rating: {self.rating}")
         self.get_image()
     
+    def _init_from_cache(self, name: str, is_file: bool, image: Image):
+        self.name = name
+        self.is_file = is_file
+        self.image = image
+
     def play(self):
         if self.is_file:
             subprocess.Popen([MEDIA_PLAYER, self.path])
@@ -106,39 +110,43 @@ class Movie(Media):
         image = Image.open(image_path)
         return cls(
             path=metadata['path'],
+            from_cache=True,
             name=metadata['name'],
             is_file=metadata['is_file'],
-            image=image,
-            from_cache=True
+            image=image
         )
 
 class Show(Media):
     def __init__(
-            self, path: str,
-            name: str = None,
-            image: Image = None,
-            from_cache: bool = False
+            self,
+            path: str,
+            from_cache: bool = False,
+            **kwargs
         ):
         self.path = path
         self.episode_list = self.get_episode_list()
 
         if from_cache:
-            self.name = name
-            self.image = image
+            self._init_from_cache(**kwargs)
             return
 
         search = os.path.basename(path)
-        self.name = self.get_media_from_imdb(search)
-        print(f"Show name: {self.name}")
+        self.init_media_from_imdb(search)
+        self.name = self.media.get('original title')
+        self.rating = self.media.get('rating')
+        print(f"Show name: {self.name} Rating: {self.rating}")
         self.get_image()
     
+    def _init_from_cache(self, name: str, image: Image):
+        self.name = name
+        self.image = image
+
     def get_episode_list(self):
         episode_list = []
         for file in os.listdir(self.path):
             if os.path.isfile(os.path.join(self.path, file)):
                 episode_list.append(file)
         episode_list.sort(key=self.comapare_episodes)
-        print(f"Episode list: {episode_list}")
         return episode_list
     
     @staticmethod
@@ -188,7 +196,7 @@ class Show(Media):
         image = Image.open(image_path)
         return cls(
             path=metadata['path'],
+            from_cache=True,
             name=metadata['name'],
-            image=image,
-            from_cache=True
+            image=image
         )

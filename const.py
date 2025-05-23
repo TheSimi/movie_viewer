@@ -9,6 +9,7 @@ SHOW_FOLDERS = os.getenv('SHOW_FOLDERS').split(',')
 CACHE_DIR = os.path.join(os.getenv('CACHE_DIR'), ".cache")
 if CACHE_DIR is None:
     CACHE_DIR = os.path.join(os.path.curdir, ".cache")
+CACHE_VERSION = "0.1.0"
 
 MEDIA_PLAYER = os.getenv('MEDIA_PLAYER')
 if MEDIA_PLAYER.lower() == 'vlc':

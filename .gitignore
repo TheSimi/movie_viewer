@@ -7,3 +7,5 @@ venv/
 build/
 dist/
 *.spec
+
+roadmap.txt

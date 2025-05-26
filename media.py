@@ -71,15 +71,17 @@ class Movie(Media):
             search = os.path.basename(path)[1:]
         
         self.init_media_from_imdb(search)
-        self.name = self.media.get('original title')
+        self.name = self.media.get('title')
         self.rating = self.media.get('rating')
-        print(f"Movie name: {self.name} Rating: {self.rating}")
+        self.year = self.media.get('year')
         self.get_image()
     
-    def _init_from_cache(self, name: str, is_file: bool, image: Image):
+    def _init_from_cache(self, name: str, is_file: bool, image: Image, rating: float, year: int):
         self.name = name
         self.is_file = is_file
         self.image = image
+        self.rating = rating
+        self.year = year
 
     def play(self):
         if self.is_file:
@@ -96,6 +98,8 @@ class Movie(Media):
         metadata = {
             'name': self.name,
             'path': self.path,
+            'rating': self.rating,
+            'year': self.year,
             'is_file': self.is_file,
         }
         with open(json_path, 'w') as f:
@@ -113,7 +117,9 @@ class Movie(Media):
             from_cache=True,
             name=metadata['name'],
             is_file=metadata['is_file'],
-            image=image
+            image=image,
+            rating=metadata['rating'],
+            year=metadata['year']
         )
 
 class Show(Media):
@@ -132,14 +138,16 @@ class Show(Media):
 
         search = os.path.basename(path)
         self.init_media_from_imdb(search)
-        self.name = self.media.get('original title')
+        self.name = self.media.get('title')
         self.rating = self.media.get('rating')
-        print(f"Show name: {self.name} Rating: {self.rating}")
+        self.year = self.media.get('year')
         self.get_image()
     
-    def _init_from_cache(self, name: str, image: Image):
+    def _init_from_cache(self, name: str, image: Image, rating: float, year: int):
         self.name = name
         self.image = image
+        self.rating = rating
+        self.year = year
 
     def get_episode_list(self):
         episode_list = []
@@ -183,6 +191,8 @@ class Show(Media):
         metadata = {
             'name': self.name,
             'path': self.path,
+            'rating': self.rating,
+            'year': self.year,
         }
         with open(json_path, 'w') as f:
             json.dump(metadata, f, indent=2)
@@ -198,5 +208,7 @@ class Show(Media):
             path=metadata['path'],
             from_cache=True,
             name=metadata['name'],
-            image=image
+            image=image,
+            year=metadata['year'],
+            rating=metadata['rating']
         )

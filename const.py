@@ -6,9 +6,11 @@ dotenv.load_dotenv()
 MOVIE_FOLDERS = os.getenv('MOVIE_FOLDERS').split(',')
 SHOW_FOLDERS = os.getenv('SHOW_FOLDERS').split(',')
 
-CACHE_DIR = os.path.join(os.getenv('CACHE_DIR'), ".cache")
-if CACHE_DIR is None:
-    CACHE_DIR = os.path.join(os.path.curdir, ".cache")
+CACHE_DIR = ""
+if os.name == 'nt': 
+    CACHE_DIR = f"{os.getenv('LOCALAPPDATA')}\\movie_viewer\.cache"
+elif os.name == 'posix':
+    CACHE_DIR = os.path.expanduser('~/.local/share/movie_viewer/.cache')
 CACHE_VERSION = "0.2.0"
 
 MEDIA_PLAYER = os.getenv('MEDIA_PLAYER')

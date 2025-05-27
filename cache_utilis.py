@@ -2,9 +2,9 @@ import os
 import shutil
 import stat
 
-from const import CACHE_DIR
+from const import CACHE_DIR, CACHE_VERSION
 
-def cache_path(path: str):
+def cache_path(path: str) -> str:
     basename = os.path.basename(path)
     # sum the values of the characters in the path
     char_sum = 0
@@ -41,3 +41,8 @@ def clear_cache(movie_list: list, show_list: list):
                 shutil.rmtree(file_path)
             except Exception as e:
                 print(f'Failed to delete {file_path}. Reason: {e}')
+
+def make_cache_version_file():
+    version_file = os.path.join(CACHE_DIR, "version.txt")
+    with open(version_file, 'w') as f:
+        f.write(CACHE_VERSION)

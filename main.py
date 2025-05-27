@@ -3,7 +3,7 @@ from PyQt6.QtWidgets import QApplication
 
 from const import MOVIE_FOLDERS, SHOW_FOLDERS, CACHE_DIR, CACHE_VERSION
 from window import MainGUIWindow
-from cache_utilis import clear_all_cache
+from cache_utilis import clear_all_cache, make_cache_version_file
 
 def check_cache() -> bool:
     if not os.path.exists(CACHE_DIR):
@@ -21,9 +21,7 @@ def cache_version_handler() -> None:
         clear_all_cache()
 
         # Update cache version
-        version_file = os.path.join(CACHE_DIR, "version.txt")
-        with open(version_file, 'w') as f:
-            f.write(CACHE_VERSION)
+        make_cache_version_file()
 
 def main():
     app = QApplication([])

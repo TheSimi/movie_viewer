@@ -1,5 +1,7 @@
 import dotenv
 import os
+import shutil
+import stat
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QScrollArea, QLabel, QStackedLayout,
     QComboBox, QSizePolicy, QGridLayout, QPushButton, QHBoxLayout, QProgressBar
@@ -10,16 +12,17 @@ from PIL.ImageQt import ImageQt
 
 from get_lists import get_file_list, get_movies_in_folder, get_shows_in_folder
 from setting_menu import SettingsMenu
-from const import MOVIE_FOLDERS, SHOW_FOLDERS
 from media import Movie, Show, Media
-from cache_utilis import clear_cache, cache_path
+from cache_utilis import cache_path, clear_cache
+from const import MEDIA_PLAYER
 
 SCROLL_AREA_WIDTH = 680
 
 class MediaButton(QPushButton):
-    def __init__(self, media):
+    def __init__(self, media, media_player: str = MEDIA_PLAYER):
         super().__init__()
         self.media = media
+        self.media_player = media_player
 
         self.setFixedSize(150, 280)
         self.setStyleSheet("border: none;")
@@ -30,10 +33,10 @@ class MediaButton(QPushButton):
 
         # Convert PIL image to QPixmap
         qt_image = ImageQt(self.media.image.copy())
-        pixmap = QPixmap.fromImage(qt_image).scaled(150, 220, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+        self.pixmap = QPixmap.fromImage(qt_image).scaled(150, 220, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
 
         image_label = QLabel()
-        image_label.setPixmap(pixmap)
+        image_label.setPixmap(self.pixmap)
         image_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         name_string = f"{self.media.name} ({self.media.year})"
@@ -54,7 +57,7 @@ class MediaButton(QPushButton):
 
         self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
 
-        self.clicked.connect(self.media.play)
+        self.clicked.connect(lambda: self.media.play(media_player=self.media_player))
 
 class MainGUIWindow(QMainWindow):
     def __init__(self, movie_folders, show_folders):
@@ -73,6 +76,7 @@ class MainGUIWindow(QMainWindow):
         self.settings_window = SettingsMenu(self, movie_folders, show_folders)
 
         self.init_show_movie_lists(movie_folders, show_folders)
+        self.media_player = MEDIA_PLAYER
 
     def _init_main_screen(self):
         self.main_screen = QWidget()
@@ -176,8 +180,10 @@ class MainGUIWindow(QMainWindow):
 
     def open_settings_menu(self):
         self.settings_window.exec()
+
         new_movie_folders = self.settings_window.movie_folders
         new_show_folders = self.settings_window.show_folders
+        self.media_player = self.settings_window.media_player_edit.text()
 
         self.init_show_movie_lists(new_movie_folders, new_show_folders)
         self.update_display()
@@ -191,7 +197,7 @@ class MainGUIWindow(QMainWindow):
         current_list = self.show_list if self.combo_box.currentText() == "Shows" else self.movie_list
 
         for idx, media in enumerate(current_list):
-            button = MediaButton(media)
+            button = MediaButton(media, self.media_player)
             row = idx // 4
             col = idx % 4
             self.grid_layout.addWidget(button, row, col)
@@ -202,13 +208,16 @@ class MainGUIWindow(QMainWindow):
         # Save the new folder paths from the settings to the .env file
         new_movie_folders = self.settings_window.movie_folders
         new_show_folders = self.settings_window.show_folders
+
+        current_media_player = self.settings_window.media_player_edit.text()
         
         new_movie_folder_const = ",".join(new_movie_folders)
         new_show_folder_const = ",".join(new_show_folders)
         dotenv.set_key(dotenv.find_dotenv(), "MOVIE_FOLDERS", new_movie_folder_const)
         dotenv.set_key(dotenv.find_dotenv(), "SHOW_FOLDERS", new_show_folder_const)
+        dotenv.set_key(dotenv.find_dotenv(), "MEDIA_PLAYER", current_media_player)
 
-        clear_cache(self.movie_list, self.show_list)
+        clear_cache(self.movie_list, self.show_list, )
 
         super().closeEvent(event)
     

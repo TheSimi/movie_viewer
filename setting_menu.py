@@ -1,12 +1,24 @@
+import os
+import subprocess
 from PyQt6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, 
-    QFileDialog, QWidget, QScrollArea, QComboBox
+    QFileDialog, QWidget, QScrollArea, QComboBox, QLineEdit, QSizePolicy
 )
 from PyQt6.QtCore import Qt
 
+from const import MOVIE_FOLDERS, SHOW_FOLDERS, CACHE_DIR, MEDIA_PLAYER
+from utils import copy_text
+
 
 class SettingsMenu(QDialog):
-    def __init__(self, parent=None, movie_folders=None, show_folders=None):
+    def __init__(
+            self,
+            parent=None,
+            movie_folders: str = MOVIE_FOLDERS,
+            show_folders: str = SHOW_FOLDERS,
+            cache_folder: str = CACHE_DIR,
+            media_player: str = MEDIA_PLAYER
+        ):
         super().__init__(parent)
         self.setWindowTitle("Settings")
         self.setFixedSize(500, 500)
@@ -20,11 +32,47 @@ class SettingsMenu(QDialog):
         outer_layout.setContentsMargins(20, 20, 20, 20)
         outer_layout.setSpacing(16)
 
+        # ─── Media Player Row ───
+        player_row = QHBoxLayout()
+        player_label = QLabel("Media Player:")
+        player_label.setFixedWidth(70)
+
+        self.media_player_edit = QLineEdit()
+        self.media_player_edit.setText(MEDIA_PLAYER)
+        self.media_player_edit.setFixedWidth(240)
+        self.media_player_edit.setReadOnly(True)
+        self.media_player_edit.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        self.media_player_edit.setCursorPosition(len(self.media_player_edit.text()))  # user can't type directly
+
+        buttons_layout = QHBoxLayout()
+        buttons_layout.setSpacing(5)
+
+        browse_button = QPushButton("Browse")
+        browse_button.setFixedWidth(70)
+        browse_button.clicked.connect(self._browse_media_player)
+        buttons_layout.addWidget(browse_button)
+
+        copy_button = QPushButton("Copy")
+        copy_button.setFixedWidth(50)
+        copy_button.clicked.connect(lambda: copy_text(self.media_player_edit.text()))
+        buttons_layout.addWidget(copy_button)
+
+        player_row.addWidget(player_label)
+        player_row.addWidget(self.media_player_edit)
+        player_row.addLayout(buttons_layout)
+        outer_layout.addLayout(player_row)
+
+        # ─── Clear Cache Button ───
+        self.open_cache_button = QPushButton("Open Cache")
+        self.open_cache_button.setFixedWidth(150)
+        self.open_cache_button.clicked.connect(self.open_cache_folder)
+        outer_layout.addWidget(self.open_cache_button, alignment=Qt.AlignmentFlag.AlignHCenter)
+
         # Combo box for switching types
         self.type_selector = QComboBox()
         self.type_selector.addItems(["Movies", "Shows"])
         self.type_selector.currentIndexChanged.connect(self.switch_type)
-        self.type_selector.setFixedWidth(300)
+        self.type_selector.setFixedWidth(420)
         outer_layout.addWidget(self.type_selector, alignment=Qt.AlignmentFlag.AlignHCenter)
 
         # Scroll area for folder list
@@ -51,6 +99,20 @@ class SettingsMenu(QDialog):
         outer_layout.addWidget(confirm_btn, alignment=Qt.AlignmentFlag.AlignHCenter)
 
         self.update_folder_list()
+
+    def _browse_media_player(self):
+            path, _ = QFileDialog.getOpenFileName(self, "Select Media Player exe", "", "Executable Files (*.exe)")
+            if path:
+                self.media_player_edit.setText(path)
+                self.media_player_edit.setCursorPosition(len(path))
+
+    @staticmethod
+    def open_cache_folder():
+        try:
+            first_file = os.path.join(CACHE_DIR, os.listdir(CACHE_DIR)[0])
+            subprocess.Popen(f'explorer /select,"{first_file}"')
+        except IndexError:
+            subprocess.Popen(f'explorer /select,"{CACHE_DIR}"')
 
     def switch_type(self):
         self.current_type = self.type_selector.currentText()

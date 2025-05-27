@@ -10,7 +10,7 @@ import re
 from PIL import Image
 
 from cache_utilis import cache_path
-from const import MEDIA_PLAYER, CACHE_DIR
+from const import MEDIA_PLAYER
 from errors import MediaNotFoundError, PosterNotFoundError
 
 class Media(abc.ABC):
@@ -38,7 +38,7 @@ class Media(abc.ABC):
         return cache_path(self.path)
     
     @abc.abstractmethod
-    def play(self):
+    def play(self, media_player: str = MEDIA_PLAYER):
         pass
 
     @abc.abstractmethod
@@ -57,6 +57,8 @@ class Movie(Media):
             from_cache: bool = False,
             **kwargs
         ):
+        super().__init__()
+
         self.path = path
 
         if from_cache:
@@ -83,9 +85,9 @@ class Movie(Media):
         self.rating = rating
         self.year = year
 
-    def play(self):
+    def play(self, media_player: str = MEDIA_PLAYER):
         if self.is_file:
-            subprocess.Popen([MEDIA_PLAYER, self.path])
+            subprocess.Popen([media_player, self.path])
         else:
             first_file = os.path.join(self.path, os.listdir(self.path)[0])
             subprocess.Popen(f'explorer /select,"{first_file}"')
@@ -129,6 +131,8 @@ class Show(Media):
             from_cache: bool = False,
             **kwargs
         ):
+        super().__init__()
+
         self.path = path
         self.episode_list = self.get_episode_list()
 
@@ -170,7 +174,7 @@ class Show(Media):
             return -1
         return int(episode_digit)
     
-    def play(self):
+    def play(self, media_player: str = MEDIA_PLAYER):
         if not os.path.exists(os.path.join(self.path, "watched")):
             os.makedirs(os.path.join(self.path, "watched"))
         
@@ -181,7 +185,7 @@ class Show(Media):
                 os.path.join(self.path, "watched", current_episode)
             )
             current_episode = os.path.join(self.path, "watched", current_episode)
-            subprocess.Popen([MEDIA_PLAYER, current_episode])
+            subprocess.Popen([media_player, current_episode])
 
     def save_to_cache(self):
         os.makedirs(self.cache_path, exist_ok=True)

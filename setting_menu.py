@@ -1,7 +1,7 @@
 import os
 import subprocess
 from PyQt6.QtWidgets import (
-    QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, 
+    QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QCheckBox,
     QFileDialog, QWidget, QScrollArea, QComboBox, QLineEdit, QSizePolicy
 )
 from PyQt6.QtCore import Qt
@@ -67,6 +67,10 @@ class SettingsMenu(QDialog):
         self.open_cache_button.setFixedWidth(150)
         self.open_cache_button.clicked.connect(self.open_cache_folder)
         outer_layout.addWidget(self.open_cache_button, alignment=Qt.AlignmentFlag.AlignHCenter)
+
+        self.reverse_sorting = QCheckBox()
+        self.reverse_sorting.setText("Reverse Sorting")
+        outer_layout.addWidget(self.reverse_sorting, alignment=Qt.AlignmentFlag.AlignHCenter)
 
         # Combo box for switching types
         self.type_selector = QComboBox()

@@ -17,6 +17,7 @@ from cache_utilis import cache_path, clear_cache
 from const import MEDIA_PLAYER
 
 SCROLL_AREA_WIDTH = 680
+COMBO_BOX_WIDTH = 450
 
 class MediaButton(QPushButton):
     def __init__(self, media, media_player: str = MEDIA_PLAYER):
@@ -104,18 +105,32 @@ class MainGUIWindow(QMainWindow):
         main_layout.addLayout(settings_bar)
 
         # Combo box
-        combo_wrapper = QHBoxLayout()
-        combo_wrapper.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        top_controls_layout = QHBoxLayout()
+        top_controls_layout.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        top_controls_layout.setSpacing(20)
 
-        self.combo_box = QComboBox()
-        self.combo_box.addItems(["Shows", "Movies"])
-        self.combo_box.setFixedWidth(SCROLL_AREA_WIDTH)
-        self.combo_box.setFont(QFont("Arial", 14))
-        self.combo_box.setStyleSheet("padding: 6px;")
-        self.combo_box.currentIndexChanged.connect(self.update_display)
+        self.list_type_combo = QComboBox()
+        self.list_type_combo.addItems(["Shows", "Movies"])
+        self.list_type_combo.setFixedWidth(COMBO_BOX_WIDTH)
+        self.list_type_combo.setFont(QFont("Arial", 14))
+        self.list_type_combo.setStyleSheet("padding: 6px;")
+        self.list_type_combo.currentIndexChanged.connect(lambda: {self.update_display(), self.resort_media_list()})
+        top_controls_layout.addWidget(self.list_type_combo)
 
-        combo_wrapper.addWidget(self.combo_box)
-        main_layout.addLayout(combo_wrapper)
+        self.sort_combo = QComboBox()
+        self.sort_combo.addItems(["Name", "Year", "Rating", "Path"])
+        self.sort_combo.setFixedWidth(120)
+        self.sort_combo.setFont(QFont("Arial", 14))
+        self.sort_combo.setStyleSheet("padding: 6px;")
+        self.sort_combo.currentIndexChanged.connect(self.resort_media_list)
+
+        self.sort_label = QLabel()
+        self.sort_label.setText("Sort by:")
+        self.sort_label.setFont(QFont("Arial", 14))
+
+        top_controls_layout.addWidget(self.sort_label)
+        top_controls_layout.addWidget(self.sort_combo)
+        main_layout.addLayout(top_controls_layout)
 
         # Scroll area
         scroll_wrapper = QHBoxLayout()
@@ -186,7 +201,7 @@ class MainGUIWindow(QMainWindow):
         self.media_player = self.settings_window.media_player_edit.text()
 
         self.init_show_movie_lists(new_movie_folders, new_show_folders)
-        self.update_display()
+        self.resort_media_list()
 
     def update_display(self):
         while self.grid_layout.count():
@@ -194,13 +209,33 @@ class MainGUIWindow(QMainWindow):
             if item.widget():
                 item.widget().deleteLater()
 
-        current_list = self.show_list if self.combo_box.currentText() == "Shows" else self.movie_list
+        current_list = self.show_list if self.list_type_combo.currentText() == "Shows" else self.movie_list
 
         for idx, media in enumerate(current_list):
             button = MediaButton(media, self.media_player)
             row = idx // 4
             col = idx % 4
             self.grid_layout.addWidget(button, row, col)
+    
+    def resort_media_list(self):
+        sort_option = self.sort_combo.currentText()
+        current_type = self.list_type_combo.currentText()
+        reverse_sorting = self.settings_window.reverse_sorting.isChecked()
+
+        # Get the correct list to sort
+        media_list = self.show_list if current_type == "Shows" else self.movie_list
+
+        # Sorting logic
+        if sort_option == "Name":
+            media_list.sort(key=lambda m: (m.name.lower(), -m.rating, -m.year), reverse=reverse_sorting)
+        elif sort_option == "Year":
+            media_list.sort(key=lambda m: (-m.year, -m.rating, m.name.lower()), reverse=reverse_sorting)
+        elif sort_option == "Rating":
+            media_list.sort(key=lambda m: (-m.rating, -m.year, m.name.lower()), reverse=reverse_sorting)
+        elif sort_option == "Path":
+            media_list.sort(key=lambda m: m.path)
+        
+        self.update_display()
     
     def closeEvent(self, event):
         print("Closing main window...")

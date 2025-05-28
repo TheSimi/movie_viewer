@@ -7,6 +7,8 @@ def get_file_list(folder_list: list, file_in_folder_func: callable) -> list:
     return file_path_list
 
 def get_shows_in_folder(folder: str) -> list:
+    if folder == '':
+        return []
     show_list = []
     for file in os.listdir(folder):
         file_path = os.path.join(folder, file)
@@ -20,6 +22,8 @@ def get_shows_in_folder(folder: str) -> list:
     return show_list
 
 def get_movies_in_folder(folder: str) -> list:
+    if folder == '':
+        return []
     movie_list = []
     for file in os.listdir(folder):
         file_path = os.path.join(folder, file)

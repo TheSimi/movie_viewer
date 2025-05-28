@@ -1,0 +1,14 @@
+[project]
+name = "movie-viewer"
+version = "0.2.0"
+description = "Watch movies and shows easly"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "cinemagoer>=2023.5.1",
+    "pillow>=11.2.1",
+    "pyinstaller>=6.13.0",
+    "pyqt6>=6.9.0",
+    "python-dotenv>=1.1.0",
+    "requests>=2.32.3",
+]

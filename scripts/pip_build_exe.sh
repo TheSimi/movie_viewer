@@ -1,3 +1,6 @@
+#!bin/bash
+echo "This script was not tested"
+
 pip install -r requirements.txt
 pip install pyinstaller
 

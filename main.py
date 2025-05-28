@@ -1,4 +1,5 @@
 import os
+import dotenv
 from PyQt6.QtWidgets import QApplication
 
 from const import MOVIE_FOLDERS, SHOW_FOLDERS, CACHE_DIR, CACHE_VERSION
@@ -23,7 +24,14 @@ def cache_version_handler() -> None:
         # Update cache version
         make_cache_version_file()
 
+def dotenv_check():
+    if not dotenv.find_dotenv():
+        with open('.env', 'w') as f:
+            f.write('MOVIE_FOLDERS=""\nSHOW_FOLDERS=""\nMEDIA_PLAYER="wmplayer"')
+
 def main():
+    dotenv_check()
+
     app = QApplication([])
 
     cache_version_handler()

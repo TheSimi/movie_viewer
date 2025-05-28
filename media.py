@@ -26,12 +26,13 @@ class Media(abc.ABC):
         cinemagoer.update(self.media)
 
     def get_image(self):
-        poster_url = self.media.get('cover url')
+        poster_url = self.media.get('full-size cover url')
         if not poster_url:
             raise PosterNotFoundError(f"Poster not found for '{self.name}'.")
         response = requests.get(poster_url)
         response.raise_for_status()
         self.image = Image.open(io.BytesIO(response.content))
+        self.image.thumbnail((300, 440))
     
     @property
     def cache_path(self):

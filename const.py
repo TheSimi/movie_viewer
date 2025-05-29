@@ -15,6 +15,6 @@ CACHE_VERSION = "0.2.0"
 
 MEDIA_PLAYER = os.getenv('MEDIA_PLAYER') if os.getenv('MEDIA_PLAYER') else ""
 if MEDIA_PLAYER.lower() == 'vlc':
-    MEDIA_PLAYER = r"C:/Program Files (x86)/VideoLAN/VLC/vlc.exe"
+    MEDIA_PLAYER = r"C:\Program Files (x86)\VideoLAN\VLC\vlc.exe"
 elif MEDIA_PLAYER == "" or MEDIA_PLAYER.lower() == 'wmplayer':
-    MEDIA_PLAYER = r"C:/Program Files (x86)/Windows Media Player/wmplayer.exe"
+    MEDIA_PLAYER = r"C:\Program Files (x86)\Windows Media Player\wmplayer.exe"

@@ -107,7 +107,7 @@ class SettingsMenu(QDialog):
     def _browse_media_player(self):
             path, _ = QFileDialog.getOpenFileName(self, "Select Media Player exe", "", "Executable Files (*.exe)")
             if path:
-                self.media_player_edit.setText(path)
+                self.media_player_edit.setText(os.path.normpath(path))
                 self.media_player_edit.setCursorPosition(len(path))
 
     @staticmethod
@@ -156,5 +156,5 @@ class SettingsMenu(QDialog):
         if folder:
             target_list = self.movie_folders if self.current_type == "Movies" else self.show_folders
             if folder not in target_list:
-                target_list.append(folder)
+                target_list.append(os.path.normpath(folder))
                 self.update_folder_list()

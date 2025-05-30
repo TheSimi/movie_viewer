@@ -48,3 +48,8 @@ class MediaButton(QPushButton):
             )
             self.image_label.setPixmap(pixmap)
             self.image_loaded = True
+    
+    def unload_image(self):
+        if self.image_loaded:
+            self.image_label.clear()
+            self.image_loaded = False

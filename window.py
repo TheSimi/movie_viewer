@@ -214,6 +214,8 @@ class MainGUIWindow(QMainWindow):
             btn_y = btn.mapTo(self.scroll_area.widget(), QPoint(0, 0)).y()
             if visible_top - 200 < btn_y < visible_bottom + 200:  # preload a bit outside view
                 btn.load_image()
+            else:
+                btn.unload_image()
     
     def closeEvent(self, event):
         print("Closing main window...")

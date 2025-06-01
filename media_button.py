@@ -7,7 +7,13 @@ from media import Media
 from const import MEDIA_PLAYER
 
 class MediaButton(QPushButton):
-    def __init__(self, media: Media, media_player: str = MEDIA_PLAYER, parent=None):
+    def __init__(
+            self,
+            media: Media,
+            media_player: str = MEDIA_PLAYER,
+            speed: float = 1,
+            parent=None
+        ):
         super().__init__(parent)
         self.media = media
         self.media_player = media_player
@@ -38,7 +44,7 @@ class MediaButton(QPushButton):
         self.setLayout(layout)
         self.setStyleSheet("background-color: none; border: none;")
 
-        self.clicked.connect(lambda: self.media.play(media_player=self.media_player))
+        self.clicked.connect(lambda: self.media.play(media_player=self.media_player, speed=speed))
 
     def load_image(self):
         if not self.image_loaded:

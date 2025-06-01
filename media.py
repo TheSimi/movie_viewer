@@ -39,7 +39,7 @@ class Media(abc.ABC):
         return cache_path(self.path)
     
     @abc.abstractmethod
-    def play(self, media_player: str = MEDIA_PLAYER):
+    def play(self, media_player: str = MEDIA_PLAYER, speed: float = 1):
         pass
 
     @abc.abstractmethod
@@ -93,10 +93,13 @@ class Movie(Media):
         self.rating = rating
         self.year = year
 
-    def play(self, media_player: str = MEDIA_PLAYER):
+    def play(self, media_player: str = MEDIA_PLAYER, speed: float = 1):
         if self.is_file:
             print(f'"{media_player}" "{self.path}"')
-            subprocess.Popen(f'"{media_player}" "{self.path}"')
+            if os.path.basename(media_player) == "vlc.exe":
+                subprocess.Popen(f'"{media_player}" "{self.path}" --rate={speed}')
+            else:
+                subprocess.Popen(f'"{media_player}" "{self.path}"')
         else:
             first_file = os.path.join(self.path, os.listdir(self.path)[0])
             subprocess.Popen(f'explorer /select,"{first_file}"')
@@ -183,7 +186,7 @@ class Show(Media):
             return -1
         return int(episode_digit)
     
-    def play(self, media_player: str = MEDIA_PLAYER):
+    def play(self, media_player: str = MEDIA_PLAYER, speed: float = 1):
         if not os.path.exists(os.path.join(self.path, "watched")):
             os.makedirs(os.path.join(self.path, "watched"))
         
@@ -194,7 +197,10 @@ class Show(Media):
                 os.path.join(self.path, "watched", current_episode)
             )
             current_episode = os.path.join(self.path, "watched", current_episode)
-            subprocess.Popen(f'"{media_player}" "{current_episode}"')
+            if os.path.basename(media_player) == "vlc.exe":
+                subprocess.Popen(f'"{media_player}" "{current_episode}" --rate={speed}')
+            else:
+                subprocess.Popen(f'"{media_player}" "{current_episode}"')
 
     def save_to_cache(self):
         os.makedirs(self.cache_path, exist_ok=True)

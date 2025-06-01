@@ -14,7 +14,7 @@ elif os.name == 'posix':
 CACHE_VERSION = "0.2.0"
 
 MEDIA_PLAYER = os.getenv('MEDIA_PLAYER') if os.getenv('MEDIA_PLAYER') else ""
-if MEDIA_PLAYER.lower() == 'vlc':
+if MEDIA_PLAYER.lower() == 'vlc' or MEDIA_PLAYER == "":
     MEDIA_PLAYER = r"C:\Program Files (x86)\VideoLAN\VLC\vlc.exe"
-elif MEDIA_PLAYER == "" or MEDIA_PLAYER.lower() == 'wmplayer':
+elif MEDIA_PLAYER.lower() == 'wmplayer':
     MEDIA_PLAYER = r"C:\Program Files (x86)\Windows Media Player\wmplayer.exe"

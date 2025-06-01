@@ -169,10 +169,11 @@ class MainGUIWindow(QMainWindow):
                 item.widget().deleteLater()
 
         current_list = self.show_list if self.list_type_combo.currentText() == "Shows" else self.movie_list
+        current_speed = self.settings_window.speed_spin.value()
 
         self.media_buttons = []
         for idx, media in enumerate(current_list):
-            button = MediaButton(media, self.media_player)
+            button = MediaButton(media, self.media_player, current_speed)
             self.media_buttons.append(button)
             row = idx // 4
             col = idx % 4

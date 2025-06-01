@@ -51,6 +51,13 @@ class Media(abc.ABC):
     def load_from_cache(self, cache_file: str):
         pass
 
+    def _get_values(self):
+        year = self.year if not self.year is None else 1800
+        rating = self.rating if not self.rating is None else 0.1
+        name = self.name if not self.name is None else "placeholder"
+        path = self.path if not self.path is None else "placeholder"
+        return year, rating, name, path
+
 class Movie(Media):
     def __init__(
             self,

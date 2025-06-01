@@ -10,8 +10,9 @@ class MediaButton(QPushButton):
     def __init__(self, media: Media, media_player: str = MEDIA_PLAYER, parent=None):
         super().__init__(parent)
         self.media = media
+        self.media_player = media_player
         self.setCheckable(True)
-        self.setFixedSize(150, 280)
+        self.setFixedSize(150, 300)
 
         # Image display
         self.image_label = QLabel()
@@ -21,11 +22,11 @@ class MediaButton(QPushButton):
         self.image_loaded = False
 
         # Text label
-        self.text_label = QLabel(media.name)
+        self.text_label = QLabel(f"{media.name} ({media.year})\n{media.rating}⭐")
         self.text_label.setWordWrap(True)
         self.text_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         self.text_label.setStyleSheet("color: white;")
-        self.text_label.setFixedHeight(30)
+        self.text_label.setFixedHeight(50)
 
         # Layout
         layout = QVBoxLayout()

@@ -190,16 +190,36 @@ class MainGUIWindow(QMainWindow):
 
         # Sorting logic
         if sort_option == "Name":
-            media_list.sort(key=lambda m: (m.name.lower(), -m.rating, -m.year), reverse=reverse_sorting)
+            media_list.sort(key=self._sort_by_name, reverse=reverse_sorting)
         elif sort_option == "Year":
-            media_list.sort(key=lambda m: (-m.year, -m.rating, m.name.lower()), reverse=reverse_sorting)
+            media_list.sort(key=self._sort_by_year, reverse=reverse_sorting)
         elif sort_option == "Rating":
-            media_list.sort(key=lambda m: (-m.rating, -m.year, m.name.lower()), reverse=reverse_sorting)
+            media_list.sort(key=self._sort_by_rating, reverse=reverse_sorting)
         elif sort_option == "Path":
-            media_list.sort(key=lambda m: m.path)
+            media_list.sort(key=self._sort_by_path)
         
         self.update_display()
     
+    @staticmethod
+    def _sort_by_name(media: Media):
+        year, rating, name, _ = media._get_values()
+        return name.lower(), -rating, -year
+    
+    @staticmethod
+    def _sort_by_year(media: Media):
+        year, rating, name, _ = media._get_values()
+        return -year, -rating, name.lower()
+    
+    @staticmethod
+    def _sort_by_rating(media: Media):
+        year, rating, name, _ = media._get_values()
+        return -rating, -year, name.lower()
+    
+    @staticmethod
+    def _sort_by_path(media: Media):
+        _, _, _, path = media._get_values()
+        return path
+
     def lazy_load_visible_buttons(self):
         scroll_value = self.scroll_area.verticalScrollBar().value()
 

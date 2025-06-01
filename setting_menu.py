@@ -86,10 +86,6 @@ class SettingsMenu(QDialog):
         self.open_cache_button.clicked.connect(self.open_cache_folder)
         outer_layout.addWidget(self.open_cache_button, alignment=Qt.AlignmentFlag.AlignHCenter)
 
-        self.reverse_sorting = QCheckBox()
-        self.reverse_sorting.setText("Reverse Sorting")
-        outer_layout.addWidget(self.reverse_sorting, alignment=Qt.AlignmentFlag.AlignHCenter)
-
         # Combo box for switching types
         self.type_selector = QComboBox()
         self.type_selector.addItems(["Movies", "Shows"])

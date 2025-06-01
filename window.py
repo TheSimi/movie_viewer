@@ -15,7 +15,7 @@ from cache_utilis import cache_path, clear_cache
 from const import MEDIA_PLAYER
 
 SCROLL_AREA_WIDTH = 680
-COMBO_BOX_WIDTH = 450
+COMBO_BOX_WIDTH = 380
 
 class MainGUIWindow(QMainWindow):
     def __init__(self, movie_folders, show_folders):
@@ -55,9 +55,10 @@ class MainGUIWindow(QMainWindow):
         # Settings button row
         settings_bar = QHBoxLayout()
         settings_bar.addStretch()
-        settings_btn = QPushButton("Settings")
+        settings_btn = QPushButton("⚙️")
         settings_btn.setObjectName("SettingsButton")  # used in clear/restore
-        settings_btn.setFixedSize(100, 32)
+        settings_btn.setFixedSize(40, 40)
+        settings_btn.setFont(QFont("Ariel", 14))
         settings_btn.clicked.connect(self.open_settings_menu)
         settings_bar.addWidget(settings_btn)
         main_layout.addLayout(settings_bar)
@@ -86,8 +87,16 @@ class MainGUIWindow(QMainWindow):
         self.sort_label.setText("Sort by:")
         self.sort_label.setFont(QFont("Arial", 14))
 
+        self.reverse_button = QPushButton()
+        self.reverse_button.setText("▼")
+        self.reverse_button.setFont(QFont("Arial", 14))
+        self.reverse_button.setFixedWidth(50)
+        self.reverse_button.setStyleSheet("padding: 6px;")
+        self.reverse_button.clicked.connect(self._on_reverse_button_click)
+
         top_controls_layout.addWidget(self.sort_label)
         top_controls_layout.addWidget(self.sort_combo)
+        top_controls_layout.addWidget(self.reverse_button)
         main_layout.addLayout(top_controls_layout)
 
         # Scroll area
@@ -184,7 +193,7 @@ class MainGUIWindow(QMainWindow):
     def resort_media_list(self):
         sort_option = self.sort_combo.currentText()
         current_type = self.list_type_combo.currentText()
-        reverse_sorting = self.settings_window.reverse_sorting.isChecked()
+        reverse_sorting = True if self.reverse_button.text() == "▲" else False
 
         # Get the correct list to sort
         media_list = self.show_list if current_type == "Shows" else self.movie_list
@@ -220,6 +229,13 @@ class MainGUIWindow(QMainWindow):
     def _sort_by_path(media: Media):
         _, _, _, path = media._get_values()
         return path
+
+    def _on_reverse_button_click(self):
+        if self.reverse_button.text() == "▼":
+            self.reverse_button.setText("▲")
+        elif self.reverse_button.text() == "▲":
+            self.reverse_button.setText("▼")
+        self.resort_media_list()
 
     def lazy_load_visible_buttons(self):
         scroll_value = self.scroll_area.verticalScrollBar().value()

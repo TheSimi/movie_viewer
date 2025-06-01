@@ -1,15 +1,13 @@
 import dotenv
 import os
-import shutil
-import stat
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QScrollArea, QLabel, QStackedLayout,
-    QComboBox, QSizePolicy, QGridLayout, QPushButton, QHBoxLayout, QProgressBar
+    QComboBox, QGridLayout, QPushButton, QHBoxLayout, QProgressBar
 )
-from PyQt6.QtGui import QPixmap, QFont
-from PyQt6.QtCore import Qt
-from PIL.ImageQt import ImageQt
+from PyQt6.QtGui import QFont
+from PyQt6.QtCore import Qt, QPoint, QTimer
 
+from media_button import MediaButton
 from get_lists import get_file_list, get_movies_in_folder, get_shows_in_folder
 from setting_menu import SettingsMenu
 from media import Movie, Show, Media
@@ -18,47 +16,6 @@ from const import MEDIA_PLAYER
 
 SCROLL_AREA_WIDTH = 680
 COMBO_BOX_WIDTH = 450
-
-class MediaButton(QPushButton):
-    def __init__(self, media, media_player: str = MEDIA_PLAYER):
-        super().__init__()
-        self.media = media
-        self.media_player = media_player
-
-        self.setFixedSize(150, 280)
-        self.setStyleSheet("border: none;")
-
-        layout = QVBoxLayout(self)
-        layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout.setContentsMargins(0, 0, 0, 0)
-
-        # Convert PIL image to QPixmap
-        qt_image = ImageQt(self.media.image.copy())
-        self.pixmap = QPixmap.fromImage(qt_image).scaled(150, 220, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
-
-        image_label = QLabel()
-        image_label.setPixmap(self.pixmap)
-        image_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-
-        name_string = f"{self.media.name} ({self.media.year})"
-        name_label = QLabel(name_string)
-        name_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        name_label.setWordWrap(True)
-        name_label.setStyleSheet("font-size: 13px;")
-
-        rating_string = f"⭐ {self.media.rating}"
-        rating_label = QLabel(rating_string)
-        rating_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        rating_label.setWordWrap(True)
-        rating_label.setStyleSheet("font-size: 13px;")
-
-        layout.addWidget(image_label)
-        layout.addWidget(name_label)
-        layout.addWidget(rating_label)
-
-        self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
-
-        self.clicked.connect(lambda: self.media.play(media_player=self.media_player))
 
 class MainGUIWindow(QMainWindow):
     def __init__(self, movie_folders, show_folders):
@@ -76,6 +33,7 @@ class MainGUIWindow(QMainWindow):
 
         self.settings_window = SettingsMenu(self, movie_folders, show_folders)
 
+        self.media_buttons = []
         self.init_show_movie_lists(movie_folders, show_folders)
         self.media_player = MEDIA_PLAYER
 
@@ -140,6 +98,7 @@ class MainGUIWindow(QMainWindow):
         self.scroll_area.setFixedWidth(SCROLL_AREA_WIDTH)
         self.scroll_area.setWidgetResizable(True)
         self.scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.scroll_area.verticalScrollBar().valueChanged.connect(self.lazy_load_visible_buttons)
 
         scroll_wrapper.addWidget(self.scroll_area)
         main_layout.addLayout(scroll_wrapper)
@@ -211,11 +170,15 @@ class MainGUIWindow(QMainWindow):
 
         current_list = self.show_list if self.list_type_combo.currentText() == "Shows" else self.movie_list
 
+        self.media_buttons = []
         for idx, media in enumerate(current_list):
             button = MediaButton(media, self.media_player)
+            self.media_buttons.append(button)
             row = idx // 4
             col = idx % 4
             self.grid_layout.addWidget(button, row, col)
+        
+        QTimer.singleShot(50, self.lazy_load_visible_buttons)
     
     def resort_media_list(self):
         sort_option = self.sort_combo.currentText()
@@ -227,15 +190,52 @@ class MainGUIWindow(QMainWindow):
 
         # Sorting logic
         if sort_option == "Name":
-            media_list.sort(key=lambda m: (m.name.lower(), -m.rating, -m.year), reverse=reverse_sorting)
+            media_list.sort(key=self._sort_by_name, reverse=reverse_sorting)
         elif sort_option == "Year":
-            media_list.sort(key=lambda m: (-m.year, -m.rating, m.name.lower()), reverse=reverse_sorting)
+            media_list.sort(key=self._sort_by_year, reverse=reverse_sorting)
         elif sort_option == "Rating":
-            media_list.sort(key=lambda m: (-m.rating, -m.year, m.name.lower()), reverse=reverse_sorting)
+            media_list.sort(key=self._sort_by_rating, reverse=reverse_sorting)
         elif sort_option == "Path":
-            media_list.sort(key=lambda m: m.path)
+            media_list.sort(key=self._sort_by_path)
         
         self.update_display()
+    
+    @staticmethod
+    def _sort_by_name(media: Media):
+        year, rating, name, _ = media._get_values()
+        return name.lower(), -rating, -year
+    
+    @staticmethod
+    def _sort_by_year(media: Media):
+        year, rating, name, _ = media._get_values()
+        return -year, -rating, name.lower()
+    
+    @staticmethod
+    def _sort_by_rating(media: Media):
+        year, rating, name, _ = media._get_values()
+        return -rating, -year, name.lower()
+    
+    @staticmethod
+    def _sort_by_path(media: Media):
+        _, _, _, path = media._get_values()
+        return path
+
+    def lazy_load_visible_buttons(self):
+        scroll_value = self.scroll_area.verticalScrollBar().value()
+
+        # Get scroll area's visible rectangle
+        visible_rect = self.scroll_area.viewport().rect()
+        visible_top = scroll_value
+        visible_bottom = scroll_value + visible_rect.height()
+
+        # Load images for buttons whose vertical position is within view
+        for btn in self.media_buttons:
+            # Get button's Y position relative to scroll area content
+            btn_y = btn.mapTo(self.scroll_area.widget(), QPoint(0, 0)).y()
+            if visible_top - 200 < btn_y < visible_bottom + 200:  # preload a bit outside view
+                btn.load_image()
+            else:
+                btn.unload_image()
     
     def closeEvent(self, event):
         print("Closing main window...")

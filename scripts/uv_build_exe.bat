@@ -9,6 +9,6 @@ uv sync
 echo "It is recommended that you manually delete the dist and build folders now"
 RMDIR /S dist
 RMDIR /S build
-uv run pyinstaller --onedir -n "movie_viewer" --windowed --icon="assets\icon.ico" main.py
+uv run pyinstaller --onedir -n "movie_viewer" --icon="assets\icon.ico" main.py
 
 copy .env dist\movie_viewer

@@ -10,7 +10,7 @@ import re
 from PIL import Image
 
 from cache_utilis import cache_path
-from const import MEDIA_PLAYER
+from const import MEDIA_PLAYER, VIDEO_EXTENTIONS, SUBTITLE_EXTENTIONS
 from errors import MediaNotFoundError, PosterNotFoundError
 
 class Media(abc.ABC):
@@ -97,12 +97,55 @@ class Movie(Media):
         if self.is_file:
             print(f'"{media_player}" "{self.path}"')
             if os.path.basename(media_player) == "vlc.exe":
-                subprocess.Popen(f'"{media_player}" "{self.path}" --rate={speed}')
+                subprocess.Popen(f'"{media_player}" "{self.path}" --rate={speed} --play-and-exit')
             else:
                 subprocess.Popen(f'"{media_player}" "{self.path}"')
         else:
-            first_file = os.path.join(self.path, os.listdir(self.path)[0])
-            subprocess.Popen(f'explorer /select,"{first_file}"')
+            files_list = os.listdir(self.path)
+            if os.path.basename(media_player) == "vlc.exe":
+                # get the video list
+                video_list = []
+                for file in files_list:
+                    if file.endswith(VIDEO_EXTENTIONS):
+                        video_list.append(file)
+                
+                if len(video_list) == 1:
+                    video_file = video_list[0]
+                    sub_file = None
+
+                    # get the subtitle list
+                    subtitle_list = []
+                    for file in files_list:
+                        if file.endswith(SUBTITLE_EXTENTIONS):
+                            subtitle_list.append(file)
+                    
+                    # if there is only 1 subtitle file
+                    if len(subtitle_list) == 1:
+                        # play the 1 video with the 1 subtitle file
+                        sub_file = subtitle_list[0]
+                    else:
+                        # try and find a subtitle file with the same name as the video
+                        for sub in subtitle_list:
+                            if os.path.splitext(sub) == os.path.splitext(video_file):
+                                sub_file = sub
+                                break
+                    
+                    command = f'"{media_player}" {os.path.join(self.path,  video_file)} '
+                    if not sub_file is None:
+                        command += f'{os.path.join(self.path, sub_file)} '
+                    command += f'--rate={speed} --play-and-exit'
+                    subprocess.Popen(command)
+                else:
+                    # play them all in a row as a playlist
+                    command = f'"{media_player}" '
+                    for video in video_list:
+                        command += os.path.join(self.path,  video)
+                        command += " "
+                    command += f'--rate={speed} --play-and-exit'
+                    subprocess.Popen(command)
+            else:
+                first_file = os.path.join(self.path, files_list[0])
+                subprocess.Popen(f'explorer /select,"{first_file}"')
 
     def save_to_cache(self):
         os.makedirs(self.cache_path, exist_ok=True)
@@ -168,7 +211,7 @@ class Show(Media):
     def get_episode_list(self):
         episode_list = []
         for file in os.listdir(self.path):
-            if os.path.isfile(os.path.join(self.path, file)):
+            if os.path.isfile(os.path.join(self.path, file)) and file.endswith(VIDEO_EXTENTIONS):
                 episode_list.append(file)
         episode_list.sort(key=self.comapare_episodes)
         return episode_list
@@ -176,15 +219,12 @@ class Show(Media):
     @staticmethod
     def comapare_episodes(episode_name: str):
         episode_name = episode_name.split('.')[0]
-        episode_list = re.findall(r'\D+|\d+', episode_name)
+        episode_as_list = re.findall(r'\D+|\d+', episode_name)
         episode_digit_list = []
-        for episode in episode_list:
+        for episode in episode_as_list:
             if episode.isdigit():
                 episode_digit_list.append(episode)
-        episode_digit = ''.join(episode_digit_list)
-        if episode_digit == 0:
-            return -1
-        return int(episode_digit)
+        return episode_digit_list
     
     def play(self, media_player: str = MEDIA_PLAYER, speed: float = 1):
         if not os.path.exists(os.path.join(self.path, "watched")):
@@ -198,7 +238,7 @@ class Show(Media):
             )
             current_episode = os.path.join(self.path, "watched", current_episode)
             if os.path.basename(media_player) == "vlc.exe":
-                subprocess.Popen(f'"{media_player}" "{current_episode}" --rate={speed}')
+                subprocess.Popen(f'"{media_player}" "{current_episode}" --rate={speed} --play-and-exit')
             else:
                 subprocess.Popen(f'"{media_player}" "{current_episode}"')
 

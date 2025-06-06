@@ -18,3 +18,12 @@ if MEDIA_PLAYER.lower() == 'vlc' or MEDIA_PLAYER == "":
     MEDIA_PLAYER = r"C:\Program Files (x86)\VideoLAN\VLC\vlc.exe"
 elif MEDIA_PLAYER.lower() == 'wmplayer':
     MEDIA_PLAYER = r"C:\Program Files (x86)\Windows Media Player\wmplayer.exe"
+
+VIDEO_EXTENTIONS = (
+    ".avi", ".mov", ".mp4", ".wmv", ".flv", ".mkv", ".webm",
+    ".mpg", ".mpeg", ".avchd", ".mts", ".3pg", ".ogv"
+)
+SUBTITLE_EXTENTIONS = (
+    ".sub", ".srt", ".ssa", ".ass", ".jss", ".SAMI", ".txt",
+    ".idx", ".usf",  ".ogm", ".ogg"
+)

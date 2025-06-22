@@ -15,7 +15,7 @@ from cache_utilis import cache_path, clear_cache
 from const import MEDIA_PLAYER
 
 SCROLL_AREA_WIDTH = 680
-COMBO_BOX_WIDTH = 380
+COMBO_BOX_WIDTH = 310
 
 class MainGUIWindow(QMainWindow):
     def __init__(self, movie_folders, show_folders):
@@ -74,7 +74,6 @@ class MainGUIWindow(QMainWindow):
         self.list_type_combo.setFont(QFont("Arial", 14))
         self.list_type_combo.setStyleSheet("padding: 6px;")
         self.list_type_combo.currentIndexChanged.connect(lambda: {self.update_display(), self.resort_media_list()})
-        top_controls_layout.addWidget(self.list_type_combo)
 
         self.sort_combo = QComboBox()
         self.sort_combo.addItems(["Name", "Year", "Rating", "Path"])
@@ -93,7 +92,16 @@ class MainGUIWindow(QMainWindow):
         self.reverse_button.setFixedWidth(50)
         self.reverse_button.setStyleSheet("padding: 6px;")
         self.reverse_button.clicked.connect(self._on_reverse_button_click)
+        
+        self.refresh_button = QPushButton()
+        self.refresh_button.setText("⭮")
+        self.refresh_button.setFont(QFont("Arial", 14))
+        self.refresh_button.setFixedWidth(50)
+        self.refresh_button.setStyleSheet("padding: 6px;")
+        self.refresh_button.clicked.connect(self._on_refresh_button_click)
 
+        top_controls_layout.addWidget(self.refresh_button)
+        top_controls_layout.addWidget(self.list_type_combo)
         top_controls_layout.addWidget(self.sort_label)
         top_controls_layout.addWidget(self.sort_combo)
         top_controls_layout.addWidget(self.reverse_button)
@@ -235,6 +243,13 @@ class MainGUIWindow(QMainWindow):
             self.reverse_button.setText("▲")
         elif self.reverse_button.text() == "▲":
             self.reverse_button.setText("▼")
+        self.resort_media_list()
+    
+    def _on_refresh_button_click(self):
+        new_movie_folders = self.settings_window.movie_folders
+        new_show_folders = self.settings_window.show_folders
+
+        self.init_show_movie_lists(new_movie_folders, new_show_folders)
         self.resort_media_list()
 
     def lazy_load_visible_buttons(self):

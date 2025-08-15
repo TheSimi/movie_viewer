@@ -1,5 +1,6 @@
 import dotenv
 import os
+import tqdm
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QScrollArea, QLabel, QStackedLayout,
     QComboBox, QGridLayout, QPushButton, QHBoxLayout, QProgressBar
@@ -57,7 +58,7 @@ class MainGUIWindow(QMainWindow):
         settings_bar.addStretch()
         settings_btn = QPushButton("⚙️")
         settings_btn.setObjectName("SettingsButton")  # used in clear/restore
-        settings_btn.setFixedSize(40, 40)
+        settings_btn.setFixedSize(50, 50)
         settings_btn.setFont(QFont("Ariel", 14))
         settings_btn.clicked.connect(self.open_settings_menu)
         settings_bar.addWidget(settings_btn)
@@ -154,10 +155,10 @@ class MainGUIWindow(QMainWindow):
     def load_file_list(
         self,
         file_path_list: list,
-        file_class: Media,
-    ) -> list:
+        file_class: Media.__class__,
+    ) -> list: 
         file_list = []
-        for file in file_path_list:
+        for file in tqdm.tqdm(file_path_list, desc=f"Loading {file_class.__name__} objects"):
             if os.path.exists(cache_path(file)):
                 file_list.append(file_class.load_from_cache(cache_path(file)))
             else:
@@ -166,7 +167,6 @@ class MainGUIWindow(QMainWindow):
                 instance.save_to_cache()
             
             self.progress_bar.setValue(self.progress_bar.value() + 1)
-
         return file_list
 
     def open_settings_menu(self):

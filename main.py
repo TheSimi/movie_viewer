@@ -1,5 +1,6 @@
 import os
 import dotenv
+import qt_material as qm
 from PyQt6.QtWidgets import QApplication
 
 from const import MOVIE_FOLDERS, SHOW_FOLDERS, CACHE_DIR, CACHE_VERSION
@@ -33,6 +34,7 @@ def main():
     dotenv_check()
 
     app = QApplication([])
+    qm.apply_stylesheet(app, theme='dark_purple.xml')
 
     cache_version_handler()
 

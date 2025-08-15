@@ -35,11 +35,11 @@ class SettingsMenu(QDialog):
         # ─── Media Player Row ───
         player_row = QHBoxLayout()
         player_label = QLabel("Media Player:")
-        player_label.setFixedWidth(70)
+        player_label.setFixedWidth(75)
 
         self.media_player_edit = QLineEdit()
         self.media_player_edit.setText(media_player)
-        self.media_player_edit.setFixedWidth(240)
+        self.media_player_edit.setFixedWidth(190)
         self.media_player_edit.setReadOnly(True)
         self.media_player_edit.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         self.media_player_edit.setCursorPosition(len(self.media_player_edit.text()))
@@ -48,12 +48,12 @@ class SettingsMenu(QDialog):
         buttons_layout.setSpacing(5)
 
         browse_button = QPushButton("Browse")
-        browse_button.setFixedWidth(70)
+        browse_button.setFixedWidth(100)
         browse_button.clicked.connect(self._browse_media_player)
         buttons_layout.addWidget(browse_button)
 
         copy_button = QPushButton("Copy")
-        copy_button.setFixedWidth(50)
+        copy_button.setFixedWidth(80)
         copy_button.clicked.connect(lambda: copy_text(self.media_player_edit.text()))
         buttons_layout.addWidget(copy_button)
 
@@ -157,7 +157,7 @@ class SettingsMenu(QDialog):
             row = QHBoxLayout()
             label = QLabel(folder)
             remove_btn = QPushButton("Remove")
-            remove_btn.setFixedWidth(80)
+            remove_btn.setFixedWidth(100)
             remove_btn.clicked.connect(lambda _, f=folder: self.remove_folder(f))
             row.addWidget(label)
             row.addStretch()

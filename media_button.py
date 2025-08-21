@@ -1,9 +1,9 @@
-from PyQt6.QtWidgets import QPushButton, QVBoxLayout, QLabel, QSizePolicy
-from PyQt6.QtCore import Qt, QSize
-from PyQt6.QtGui import QPixmap, QIcon
+from PyQt6.QtWidgets import QPushButton, QVBoxLayout, QLabel, QMenu, QMessageBox
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QPixmap
 from PIL.ImageQt import ImageQt
 
-from media import Media
+from media import Media, Show, Movie
 from const import MEDIA_PLAYER
 
 class MediaButton(QPushButton):
@@ -45,6 +45,50 @@ class MediaButton(QPushButton):
         self.setStyleSheet("background-color: none; border: none;")
 
         self.clicked.connect(lambda: self.media.play(media_player=self.media_player, speed=speed))
+
+        self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.customContextMenuRequested.connect(self._show_context_menu)
+
+    def _show_context_menu(self, pos):
+        context_menu = QMenu(self)
+        open_in_explorer = context_menu.addAction("Open in files")
+        open_in_explorer.triggered.connect(self.media.open_in_explorer)
+        if isinstance(self.media, Show):
+            rm_wached = context_menu.addAction("Delete wached")
+            rm_wached.triggered.connect(self._remove_wached_folder)
+        elif isinstance(self.media, Movie):
+            rm_movie = context_menu.addAction("Delete movie")
+            rm_movie.triggered.connect(self._remove_movie)
+        if context_menu.actions():
+            context_menu.exec(self.mapToGlobal(pos))
+
+    def _get_main_window(self):
+        current_widget = self
+        while not current_widget.__class__.__name__ == 'MainGUIWindow':
+            current_widget = current_widget.parent()
+        return current_widget
+    
+    def _get_confirmation(self) -> bool:
+        confirmation = QMessageBox.question(
+            self._get_main_window(), 'Confirmation',
+            "Are you sure you want to proceed?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No
+        )
+        return confirmation == QMessageBox.StandardButton.Yes
+
+    def _remove_wached_folder(self):
+        if not self._get_confirmation():
+            return
+        # assuming self.media is a Show type
+        self.media.remove_wached_folder()
+    
+    def _remove_movie(self):
+        if not self._get_confirmation():
+            return
+        # assuming self.media is a Movie type
+        self.media.remove_movie()
+        self._get_main_window()._on_refresh_button_click()
 
     def load_image(self):
         if not self.image_loaded:

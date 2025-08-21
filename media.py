@@ -8,6 +8,7 @@ import requests
 import json
 import re
 from PIL import Image
+from PyQt6.QtWidgets import QMessageBox
 
 from cache_utilis import cache_path
 from const import MEDIA_PLAYER, VIDEO_EXTENTIONS, SUBTITLE_EXTENTIONS
@@ -46,6 +47,10 @@ class Media(abc.ABC):
     
     @abc.abstractmethod
     def play(self, media_player: str = MEDIA_PLAYER, speed: float = 1):
+        pass
+
+    @abc.abstractmethod
+    def open_in_explorer(self):
         pass
 
     @abc.abstractmethod
@@ -114,6 +119,17 @@ class Movie(Media):
                 first_file = os.path.join(self.path, files_list[0])
                 subprocess.Popen(f'explorer /select,"{first_file}"')
     
+    def open_in_explorer(self):
+        if not os.path.exists(self.path):
+            return
+
+        if self.is_file:
+            subprocess.Popen(f'explorer /select,"{self.path}"')
+        else:
+            files_list = os.listdir(self.path)
+            first_file = os.path.join(self.path, files_list[0])
+            subprocess.Popen(f'explorer /select,"{first_file}"')
+    
     def _play_with_vlc(self, files_list: list[str], media_player: str, speed: float):
         # get the video list
         video_list = []
@@ -159,7 +175,11 @@ class Movie(Media):
         command += f'--rate={speed} --play-and-exit'
         subprocess.Popen(command)
  
-        
+    def remove_movie(self):
+        if self.is_file:
+            os.remove(self.path)
+        else:
+            shutil.rmtree(self.path)
 
     def save_to_cache(self):
         os.makedirs(self.cache_path, exist_ok=True)
@@ -258,7 +278,17 @@ class Show(Media):
         else:
             first_file = os.path.join(self.path, os.listdir(self.path)[0])
             subprocess.Popen(f'explorer /select,"{first_file}"')
+    
+    def open_in_explorer(self):
+        if not os.path.exists(self.path):
+            return
+        files_list = os.listdir(self.path)
+        first_file = os.path.join(self.path, files_list[0])
+        subprocess.Popen(f'explorer /select,"{first_file}"')
 
+    def remove_wached_folder(self):
+        if os.path.exists(os.path.join(self.path, "watched")):
+            shutil.rmtree(os.path.join(self.path, "watched"))
 
     def save_to_cache(self):
         os.makedirs(self.cache_path, exist_ok=True)

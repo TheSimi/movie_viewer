@@ -28,7 +28,12 @@ def cache_version_handler() -> None:
 def dotenv_check():
     if not dotenv.find_dotenv():
         with open('.env', 'w') as f:
-            f.write('MOVIE_FOLDERS=""\nSHOW_FOLDERS=""\nMEDIA_PLAYER="wmplayer"')
+            f.write(
+                'MOVIE_FOLDERS=""\n'
+                'SHOW_FOLDERS=""\n'
+                'MEDIA_PLAYER="vlc"\n'
+                'SPEED="1"\n'
+            )
 
 def main():
     dotenv_check()

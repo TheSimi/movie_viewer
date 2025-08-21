@@ -275,6 +275,7 @@ class MainGUIWindow(QMainWindow):
         # Save the new folder paths from the settings to the .env file
         new_movie_folders = self.settings_window.movie_folders
         new_show_folders = self.settings_window.show_folders
+        current_speed = str(round(self.settings_window.speed_spin.value(), 1))
 
         current_media_player = self.settings_window.media_player_edit.text()
         
@@ -283,6 +284,7 @@ class MainGUIWindow(QMainWindow):
         dotenv.set_key(dotenv.find_dotenv(), "MOVIE_FOLDERS", new_movie_folder_const)
         dotenv.set_key(dotenv.find_dotenv(), "SHOW_FOLDERS", new_show_folder_const)
         dotenv.set_key(dotenv.find_dotenv(), "MEDIA_PLAYER", current_media_player)
+        dotenv.set_key(dotenv.find_dotenv(), "SPEED",  current_speed)
 
         clear_cache(self.movie_list, self.show_list, )
 

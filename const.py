@@ -5,6 +5,10 @@ dotenv.load_dotenv(override=True)
 
 MOVIE_FOLDERS = os.getenv('MOVIE_FOLDERS').split(',') if os.getenv('MOVIE_FOLDERS') else []
 SHOW_FOLDERS = os.getenv('SHOW_FOLDERS').split(',') if os.getenv('SHOW_FOLDERS') else []
+try:
+    PLAY_SPEED = float(os.getenv('SPEED')) if os.getenv('SPEED') else 1.0
+except ValueError:
+    PLAY_SPEED = 1.0
 
 CACHE_DIR = ""
 if os.name == 'nt': 

@@ -7,7 +7,7 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import Qt
 
-from const import MOVIE_FOLDERS, SHOW_FOLDERS, CACHE_DIR, MEDIA_PLAYER
+from const import MOVIE_FOLDERS, SHOW_FOLDERS, CACHE_DIR, MEDIA_PLAYER, PLAY_SPEED
 from utils import copy_text
 
 
@@ -71,7 +71,7 @@ class SettingsMenu(QDialog):
         self.speed_spin = QDoubleSpinBox()
         self.speed_spin.setRange(0.1, 2.0)
         self.speed_spin.setSingleStep(0.1)
-        self.speed_spin.setValue(1.0)
+        self.speed_spin.setValue(PLAY_SPEED if PLAY_SPEED < 2 and PLAY_SPEED > 0.1 else 1.0)
         self.speed_spin.setDecimals(1)
 
         speed_row.addWidget(speed_label)

@@ -51,6 +51,8 @@ class MediaButton(QPushButton):
 
     def _show_context_menu(self, pos):
         context_menu = QMenu(self)
+        details = context_menu.addAction("Details")
+        details.triggered.connect(self._open_details)
         open_in_explorer = context_menu.addAction("Open in files")
         open_in_explorer.triggered.connect(self.media.open_in_explorer)
         if isinstance(self.media, Show):
@@ -61,6 +63,21 @@ class MediaButton(QPushButton):
             rm_movie.triggered.connect(self._remove_movie)
         if context_menu.actions():
             context_menu.exec(self.mapToGlobal(pos))
+
+    def _open_details(self):
+        print_str = f"name: {self.media.name}\n"
+        print_str += f"year: {self.media.year}\n"
+        print_str += f"imdb rating: {self.media.rating}\n"
+
+        if isinstance(self.media, Movie):
+            print_str += f"metacritic rating: {self.media.metacritic}\n"
+            print_str += f"runtime: {self.media.runtime//60}h{self.media.runtime%60}m\n"
+        elif isinstance(self.media, Show):
+            print_str += f"episodes: {self.media.episodes}\n"
+            print_str += f"seasons: {self.media.seasons}\n"
+
+        print_str += f"plot: {self.media.plot}"
+        print(print_str)
 
     def _get_main_window(self):
         current_widget = self

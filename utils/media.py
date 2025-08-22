@@ -8,7 +8,7 @@ import requests
 import json
 import re
 from PIL import Image
-from PyQt6.QtWidgets import QMessageBox
+from typing import Union
 
 from utils.cache_utilis import cache_path
 from const import MEDIA_PLAYER, VIDEO_EXTENTIONS, SUBTITLE_EXTENTIONS
@@ -18,19 +18,17 @@ class Media(abc.ABC):
     def __init__(self):
         pass
 
-    def init_media_from_imdb(self, search: str) -> None:
+    def init_media_from_imdb(self, search: str, infosets: list[str] = ['main']) -> None:
         cinemagoer = imdb.Cinemagoer()
         search_result = cinemagoer.search_movie(search)
         if not search_result:
             raise MediaNotFoundError(f"Media '{search}' not found in IMDb.")
         self.media = None
-        for result in search_result:
-            if result.get('title', '').lower() == search.lower():
-                self.media = result
-                break
-        if not self.media:
-            self.media = search_result[0]
-        cinemagoer.update(self.media)
+        search_index = 0
+        while not self._check_serach_result_kind(search_result[search_index]):
+            search_index += 1
+        self.media = search_result[search_index]
+        cinemagoer.update(self.media, info=infosets)
 
     def get_image(self):
         poster_url = self.media.get('full-size cover url')
@@ -40,17 +38,31 @@ class Media(abc.ABC):
         response.raise_for_status()
         self.image = Image.open(io.BytesIO(response.content))
         self.image.thumbnail((300, 440))
+        self.image = self.image.convert("RGB")
     
     @property
     def cache_path(self):
         return cache_path(self.path)
     
     @abc.abstractmethod
+    def _check_serach_result_kind(self, search_result: imdb.Movie) -> bool:
+        """
+        Returns true if the given movie object is the right kind
+        """
+        pass
+
+    @abc.abstractmethod
     def play(self, media_player: str = MEDIA_PLAYER, speed: float = 1):
+        """
+        Opens a media player and plays the media
+        """
         pass
 
     @abc.abstractmethod
     def open_in_explorer(self):
+        """
+        Open the file the media is connected to on the windows explorer
+        """
         pass
 
     @abc.abstractmethod
@@ -91,18 +103,49 @@ class Movie(Media):
             self.is_file = False
             search = os.path.basename(path)[1:]
         
-        self.init_media_from_imdb(search)
+        # infoset explenation:
+        # synopsis for the plot summary
+        # vote details for the rating
+        # critic reviews for the metacritic rating
+        # technical for the runtime
+        self.init_media_from_imdb(search, infosets=['main', 'synopsis', 'vote details', 'critic reviews', 'technical'])
         self.name = self.media.get('title', '')
         self.rating = self.media.get('rating', None)
         self.year = self.media.get('year', 0)
+        self.metacritic = self.media.get('metascore', 0)
+        self.plot = self.media.get('plot', [''])[0]
+        self.runtime = self._get_minutes(self.media.get('tech', {}).get('runtime', '0h 0m::(0 min)'))
         self.get_image()
     
-    def _init_from_cache(self, name: str, is_file: bool, image: Image, rating: float, year: int):
+    @staticmethod
+    def _get_minutes(time_string: Union[str, list[str]]):
+        if isinstance(time_string, list):
+            time_string = time_string[0]
+        match = re.search(r'(\d+)h\s*(\d+)m::\((\d+)\s*min\)', time_string)
+        return int(match.group(3))
+
+    def _init_from_cache(
+        self,
+        name: str,
+        is_file: bool,
+        image: Image,
+        rating: float,
+        year: int,
+        metacritic: int,
+        plot: str,
+        runtime: int
+    ):
         self.name = name
         self.is_file = is_file
         self.image = image
         self.rating = rating
         self.year = year
+        self.metacritic = metacritic
+        self.plot = plot
+        self.runtime = runtime
+
+    def _check_serach_result_kind(self, search_result: imdb.Movie) -> bool:
+        return search_result.get('kind', '') in ['movie', 'tv movie']
 
     def play(self, media_player: str = MEDIA_PLAYER, speed: float = 1):
         if self.is_file:
@@ -129,7 +172,7 @@ class Movie(Media):
             files_list = os.listdir(self.path)
             first_file = os.path.join(self.path, files_list[0])
             subprocess.Popen(f'explorer /select,"{first_file}"')
-    
+
     def _play_with_vlc(self, files_list: list[str], media_player: str, speed: float):
         # get the video list
         video_list = []
@@ -185,13 +228,16 @@ class Movie(Media):
         os.makedirs(self.cache_path, exist_ok=True)
         image_path = os.path.join(self.cache_path, "image.png")
         json_path = os.path.join(self.cache_path, "metadata.json")
-        self.image.save(image_path, format="PNG")
+        self.image.save(image_path)
         metadata = {
             'name': self.name,
             'path': self.path,
             'rating': self.rating,
             'year': self.year,
             'is_file': self.is_file,
+            'metacritic': self.metacritic,
+            'plot': self.plot,
+            'runtime': self.runtime
         }
         with open(json_path, 'w') as f:
             json.dump(metadata, f, indent=3)
@@ -210,7 +256,10 @@ class Movie(Media):
             is_file=metadata['is_file'],
             image=image,
             rating=metadata['rating'],
-            year=metadata['year']
+            year=metadata['year'],
+            metacritic=metadata['metacritic'],
+            plot=metadata['plot'],
+            runtime=metadata['runtime']
         )
 
 class Show(Media):
@@ -230,17 +279,35 @@ class Show(Media):
             return
 
         search = os.path.basename(path)
-        self.init_media_from_imdb(search)
-        self.name = self.media.get('title')
-        self.rating = self.media.get('rating')
-        self.year = self.media.get('year')
+        self.init_media_from_imdb(search, infosets=['main', 'synopsis', 'vote details', 'episodes'])
+        self.name = self.media.get('title', '')
+        self.rating = self.media.get('rating', None)
+        self.year = self.media.get('year', 0)
+        self.plot = self.media.get('plot', [''])[0]
+        self.episodes = self.media.get('number of episodes', 0)
+        self.seasons = len(self.media.get('episodes', {}))
         self.get_image()
     
-    def _init_from_cache(self, name: str, image: Image, rating: float, year: int):
+    def _init_from_cache(
+        self,
+        name: str,
+        image: Image,
+        rating: float,
+        year: int,
+        plot: str,
+        episodes: int,
+        seasons: int
+    ):
         self.name = name
         self.image = image
         self.rating = rating
         self.year = year
+        self.plot = plot
+        self.episodes = episodes
+        self.seasons = seasons
+
+    def _check_serach_result_kind(self, search_result: imdb.Movie) -> bool:
+        return search_result.get('kind', '') in ['tv series', 'tv mini series']
 
     def get_episode_list(self):
         episode_list = []
@@ -300,6 +367,9 @@ class Show(Media):
             'path': self.path,
             'rating': self.rating,
             'year': self.year,
+            'plot': self.plot,
+            'episodes': self.episodes,
+            'seasons': self.seasons
         }
         with open(json_path, 'w') as f:
             json.dump(metadata, f, indent=2)
@@ -317,5 +387,8 @@ class Show(Media):
             name=metadata['name'],
             image=image,
             year=metadata['year'],
-            rating=metadata['rating']
+            rating=metadata['rating'],
+            plot=metadata['plot'],
+            episodes=metadata['episodes'],
+            seasons=metadata['seasons']
         )

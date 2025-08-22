@@ -8,11 +8,11 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtGui import QFont
 from PyQt6.QtCore import Qt, QPoint, QTimer
 
-from media_button import MediaButton
-from get_lists import get_file_list, get_movies_in_folder, get_shows_in_folder
-from setting_menu import SettingsMenu
-from media import Movie, Show, Media
-from cache_utilis import cache_path, clear_cache
+from components.media_button import MediaButton
+from utils.get_lists import get_file_list, get_movies_in_folder, get_shows_in_folder
+from components.setting_menu import SettingsMenu
+from utils.media import Movie, Show, Media
+from utils.cache_utilis import cache_path, clear_cache
 from const import MEDIA_PLAYER
 
 SCROLL_AREA_WIDTH = 680

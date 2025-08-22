@@ -4,8 +4,8 @@ import qt_material as qm
 from PyQt6.QtWidgets import QApplication
 
 from const import MOVIE_FOLDERS, SHOW_FOLDERS, CACHE_DIR, CACHE_VERSION
-from window import MainGUIWindow
-from cache_utilis import clear_all_cache, make_cache_version_file
+from components.main_window import MainGUIWindow
+from utils.cache_utilis import clear_all_cache, make_cache_version_file
 
 def check_cache() -> bool:
     if not os.path.exists(CACHE_DIR):

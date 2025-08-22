@@ -3,7 +3,7 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QPixmap
 from PIL.ImageQt import ImageQt
 
-from media import Media, Show, Movie
+from utils.media import Media, Show, Movie
 from const import MEDIA_PLAYER
 
 class MediaButton(QPushButton):

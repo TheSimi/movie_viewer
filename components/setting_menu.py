@@ -8,7 +8,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt
 
 from const import MOVIE_FOLDERS, SHOW_FOLDERS, CACHE_DIR, MEDIA_PLAYER, PLAY_SPEED
-from utils import copy_text
+from utils.utils import copy_text
 
 
 class SettingsMenu(QDialog):

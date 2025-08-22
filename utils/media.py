@@ -10,9 +10,9 @@ import re
 from PIL import Image
 from PyQt6.QtWidgets import QMessageBox
 
-from cache_utilis import cache_path
+from utils.cache_utilis import cache_path
 from const import MEDIA_PLAYER, VIDEO_EXTENTIONS, SUBTITLE_EXTENTIONS
-from errors import MediaNotFoundError, PosterNotFoundError
+from utils.errors import MediaNotFoundError, PosterNotFoundError
 
 class Media(abc.ABC):
     def __init__(self):

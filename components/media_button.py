@@ -1,9 +1,10 @@
-from PyQt6.QtWidgets import QPushButton, QVBoxLayout, QLabel, QMenu, QMessageBox
+from PyQt6.QtWidgets import QPushButton, QVBoxLayout, QLabel, QMenu, QMessageBox, QMainWindow
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QPixmap
 from PIL.ImageQt import ImageQt
 
 from utils.media import Media, Show, Movie
+from components.details_window import MediaDetailsDialog
 from const import MEDIA_PLAYER
 
 class MediaButton(QPushButton):
@@ -65,21 +66,11 @@ class MediaButton(QPushButton):
             context_menu.exec(self.mapToGlobal(pos))
 
     def _open_details(self):
-        print_str = f"name: {self.media.name}\n"
-        print_str += f"year: {self.media.year}\n"
-        print_str += f"imdb rating: {self.media.rating}\n"
+        details_win = MediaDetailsDialog(self.media, self.main_window)
+        details_win.show()
 
-        if isinstance(self.media, Movie):
-            print_str += f"metacritic rating: {self.media.metacritic}\n"
-            print_str += f"runtime: {self.media.runtime//60}h{self.media.runtime%60}m\n"
-        elif isinstance(self.media, Show):
-            print_str += f"episodes: {self.media.episodes}\n"
-            print_str += f"seasons: {self.media.seasons}\n"
-
-        print_str += f"plot: {self.media.plot}"
-        print(print_str)
-
-    def _get_main_window(self):
+    @property
+    def main_window(self) -> QMainWindow:
         current_widget = self
         while not current_widget.__class__.__name__ == 'MainGUIWindow':
             current_widget = current_widget.parent()
@@ -87,7 +78,7 @@ class MediaButton(QPushButton):
     
     def _get_confirmation(self) -> bool:
         confirmation = QMessageBox.question(
-            self._get_main_window(), 'Confirmation',
+            self.main_window, 'Confirmation',
             "Are you sure you want to proceed?",
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
             QMessageBox.StandardButton.No
@@ -105,7 +96,7 @@ class MediaButton(QPushButton):
             return
         # assuming self.media is a Movie type
         self.media.remove_movie()
-        self._get_main_window()._on_refresh_button_click()
+        self.main_window._on_refresh_button_click()
 
     def load_image(self):
         if not self.image_loaded:

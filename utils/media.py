@@ -79,7 +79,13 @@ class Media(abc.ABC):
         rating = self.rating if not self.rating is None else 0.1
         name = self.name if not self.name is None else "placeholder"
         path = self.path if not self.path is None else "placeholder"
-        return year, rating, name, path
+        if isinstance(self, Movie):
+            length = self.runtime if not self.runtime is None else 0
+        elif isinstance(self, Show):
+            length = self.episodes if not self.episodes is None else 0
+        else:
+            length = 0
+        return year, rating, name, path, length
 
 class Movie(Media):
     def __init__(

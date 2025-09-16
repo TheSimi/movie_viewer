@@ -7,6 +7,11 @@ from utils.media import Media, Show, Movie
 from components.details_window import MediaDetailsDialog
 from const import MEDIA_PLAYER
 
+IDLE_BUTTON_STYLESHEET = "border: 2px solid #222; background-color: none; border-radius: 4px;"
+FOCUSED_BUTTON_STYLESHEET = "border: 2px solid white; background-color: none; border-radius: 4px;"
+TEXT_LABEL_STYLESHEET = "color: white; background: none; border: none;"
+IMAGE_LABEL_STYLESHEET = "background: none; border: none;"
+
 class MediaButton(QPushButton):
     def __init__(
             self,
@@ -20,32 +25,49 @@ class MediaButton(QPushButton):
         self.media_player = media_player
         self.setCheckable(True)
         self.setFixedSize(150, 300)
+        self.setStyleSheet(IDLE_BUTTON_STYLESHEET)
 
         # Image display
         self.image_label = QLabel()
         self.image_label.setFixedSize(150, 220)
         self.image_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.image_label.setStyleSheet("background: #222; border-radius: 4px;")
+        self.image_label.setStyleSheet(IMAGE_LABEL_STYLESHEET)
         self.image_loaded = False
 
         # Text label
-        self.text_label = QLabel(f"{media.name} ({media.year})\n{media.rating}⭐")
-        self.text_label.setWordWrap(True)
-        self.text_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
-        self.text_label.setStyleSheet("color: white;")
-        self.text_label.setFixedHeight(50)
+        self.name_year_label = QLabel(f"{media.name} ({media.year})")
+        self.name_year_label.setWordWrap(True)
+        self.name_year_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        self.name_year_label.setStyleSheet(TEXT_LABEL_STYLESHEET)
+
+        self.rating_label = QLabel(f"{media.rating}⭐")
+        self.rating_label.setWordWrap(True)
+        self.rating_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        self.rating_label.setStyleSheet(TEXT_LABEL_STYLESHEET)
 
         # Layout
-        layout = QVBoxLayout()
-        layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout.setSpacing(5)
-        layout.addWidget(self.image_label)
-        layout.addWidget(self.text_label)
+        self.main_layout = QVBoxLayout()
+        self.main_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.main_layout.setSpacing(5)
+        self.main_layout.addWidget(self.image_label)
+        self.main_layout.addWidget(self.name_year_label)
+        self.main_layout.addWidget(self.rating_label)
+        
+        if isinstance(self.media, Movie):
+            self.length_label = QLabel(f"[ {media.runtime//60:02d}:{media.runtime%60:02d} ]")
+            self.length_label.setWordWrap(True)
+            self.length_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+            self.length_label.setStyleSheet(TEXT_LABEL_STYLESHEET)
+            self.main_layout.addWidget(self.length_label)
 
-        self.setLayout(layout)
-        self.setStyleSheet("background-color: none; border: none;")
+        self.setLayout(self.main_layout)
 
         self.clicked.connect(lambda: self.media.play(media_player=self.media_player, speed=speed))
+
+        self.enterEvent = lambda arg: self.setStyleSheet(FOCUSED_BUTTON_STYLESHEET)
+        self.leaveEvent = lambda arg: self.setStyleSheet(IDLE_BUTTON_STYLESHEET)
+        self.focusInEvent = lambda arg: self.setStyleSheet(FOCUSED_BUTTON_STYLESHEET)
+        self.focusOutEvent = lambda arg: self.setStyleSheet(IDLE_BUTTON_STYLESHEET)
 
         self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.customContextMenuRequested.connect(self._show_context_menu)

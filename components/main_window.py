@@ -77,7 +77,7 @@ class MainGUIWindow(QMainWindow):
         self.list_type_combo.currentIndexChanged.connect(lambda: {self.update_display(), self.resort_media_list()})
 
         self.sort_combo = QComboBox()
-        self.sort_combo.addItems(["Name", "Year", "Rating", "Path"])
+        self.sort_combo.addItems(["Name", "Year", "Rating", "Path", "Length"])
         self.sort_combo.setFixedWidth(120)
         self.sort_combo.setFont(QFont("Arial", 14))
         self.sort_combo.setStyleSheet("padding: 6px;")
@@ -214,29 +214,36 @@ class MainGUIWindow(QMainWindow):
         elif sort_option == "Rating":
             media_list.sort(key=self._sort_by_rating, reverse=reverse_sorting)
         elif sort_option == "Path":
-            media_list.sort(key=self._sort_by_path)
+            media_list.sort(key=self._sort_by_path, reverse=reverse_sorting)
+        elif sort_option == "Length":
+            media_list.sort(key=self._sort_by_length, reverse=reverse_sorting)
         
         self.update_display()
     
     @staticmethod
     def _sort_by_name(media: Media):
-        year, rating, name, _ = media._get_values()
+        year, rating, name, _, _ = media._get_values()
         return name.lower(), -rating, -year
     
     @staticmethod
     def _sort_by_year(media: Media):
-        year, rating, name, _ = media._get_values()
+        year, rating, name, _, _ = media._get_values()
         return -year, -rating, name.lower()
     
     @staticmethod
     def _sort_by_rating(media: Media):
-        year, rating, name, _ = media._get_values()
+        year, rating, name, _, _ = media._get_values()
         return -rating, -year, name.lower()
     
     @staticmethod
     def _sort_by_path(media: Media):
-        _, _, _, path = media._get_values()
+        _, _, _, path, _ = media._get_values()
         return path
+    
+    @staticmethod
+    def _sort_by_length(media: Media):
+        year, rating, name, _, length = media._get_values()
+        return length, -rating, -year, name.lower()
 
     def _on_reverse_button_click(self):
         if self.reverse_button.text() == "▼":

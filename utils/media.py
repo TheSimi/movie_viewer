@@ -7,11 +7,12 @@ import io
 import requests
 import json
 import re
+import traceback
 from PIL import Image
 from typing import Union
 
 from utils.cache_utilis import cache_path
-from const import MEDIA_PLAYER, VIDEO_EXTENTIONS, SUBTITLE_EXTENTIONS
+from const import MEDIA_PLAYER, VIDEO_EXTENTIONS, SUBTITLE_EXTENTIONS, UNKNOWN_POSTER
 from utils.errors import MediaNotFoundError, PosterNotFoundError
 
 class Media(abc.ABC):
@@ -31,7 +32,7 @@ class Media(abc.ABC):
         cinemagoer.update(self.media, info=infosets)
 
     def get_image(self):
-        poster_url = self.media.get('full-size cover url')
+        poster_url = self.media.get('full-size cover url', None)
         if not poster_url:
             raise PosterNotFoundError(f"Poster not found for '{self.name}'.")
         response = requests.get(poster_url)
@@ -73,6 +74,10 @@ class Media(abc.ABC):
     @abc.abstractmethod
     def load_from_cache(self, cache_file: str):
         pass
+    
+    def delete_cache(self):
+        if os.path.exists(self.cache_path):
+            shutil.rmtree(self.cache_path)
 
     def _get_values(self):
         year = self.year if not self.year is None else 1800
@@ -114,14 +119,21 @@ class Movie(Media):
         # vote details for the rating
         # critic reviews for the metacritic rating
         # technical for the runtime
-        self.init_media_from_imdb(search, infosets=['main', 'synopsis', 'vote details', 'critic reviews', 'technical'])
-        self.name = self.media.get('title', '')
+        try:
+            self.init_media_from_imdb(search, infosets=['main', 'synopsis', 'vote details', 'critic reviews', 'technical'])
+        except Exception:
+            print(traceback.format_exc())
+            self.media = {}
+        self.name = self.media.get('title', search)
         self.rating = self.media.get('rating', None)
         self.year = self.media.get('year', 0)
         self.metacritic = self.media.get('metascore', 0)
         self.plot = self.media.get('plot', [''])[0]
         self.runtime = self._get_minutes(self.media.get('tech', {}).get('runtime', '0h 0m::(0 min)'))
-        self.get_image()
+        try:
+            self.get_image()
+        except PosterNotFoundError:
+            self.image = UNKNOWN_POSTER
     
     @staticmethod
     def _get_minutes(time_string: Union[str, list[str]]):
@@ -285,14 +297,21 @@ class Show(Media):
             return
 
         search = os.path.basename(path)
-        self.init_media_from_imdb(search, infosets=['main', 'synopsis', 'vote details', 'episodes'])
-        self.name = self.media.get('title', '')
+        try:
+            self.init_media_from_imdb(search, infosets=['main', 'synopsis', 'vote details', 'episodes'])
+        except Exception:
+            print(traceback.format_exc())
+            self.media = {}
+        self.name = self.media.get('title', search)
         self.rating = self.media.get('rating', None)
         self.year = self.media.get('year', 0)
         self.plot = self.media.get('plot', [''])[0]
         self.episodes = self.media.get('number of episodes', 0)
         self.seasons = len(self.media.get('episodes', {}))
-        self.get_image()
+        try:
+            self.get_image()
+        except PosterNotFoundError:
+            self.image = UNKNOWN_POSTER
     
     def _init_from_cache(
         self,

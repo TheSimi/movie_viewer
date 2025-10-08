@@ -76,12 +76,14 @@ class MediaButton(QPushButton):
 
     def _show_context_menu(self, pos):
         context_menu = QMenu(self)
-        open_in_explorer = context_menu.addAction("Open in files")
-        open_in_explorer.triggered.connect(self.media.open_in_explorer)
         play =  context_menu.addAction("Play")
         play.triggered.connect(self._open_play_window)
         details = context_menu.addAction("Details")
         details.triggered.connect(self._open_details)
+        open_in_explorer = context_menu.addAction("Open in files")
+        open_in_explorer.triggered.connect(self.media.open_in_explorer)
+        delete_cache_and_reload = context_menu.addAction("Reload")
+        delete_cache_and_reload.triggered.connect(self._del_cache_and_reload)
         if isinstance(self.media, Show):
             rm_wached = context_menu.addAction("Delete wached")
             rm_wached.triggered.connect(self._remove_wached_folder)
@@ -98,6 +100,10 @@ class MediaButton(QPushButton):
     def _open_play_window(self):
         play_win = PlayWindow(self.media, self.speed)
         play_win.exec()
+    
+    def _del_cache_and_reload(self):
+        self.media.delete_cache()
+        self.main_window._on_refresh_button_click()
 
     @property
     def main_window(self) -> QMainWindow:

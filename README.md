@@ -46,10 +46,6 @@ Download and open the program, once you do go to the settings and while on eithe
 
 When you close out of the settings menu it should scan those folders, and scrape info about them. Give it a little time.
 
-### Configuration
-
-When opening the folder for the first time, go to the settings and configure the folders where you save your movies and shows.
-
 ## Settings
 
 Using the settings menu you can do several things:

@@ -1,10 +1,11 @@
 import os
 import dotenv
+import qt_material as qm
 from PyQt6.QtWidgets import QApplication
 
 from const import MOVIE_FOLDERS, SHOW_FOLDERS, CACHE_DIR, CACHE_VERSION
-from window import MainGUIWindow
-from cache_utilis import clear_all_cache, make_cache_version_file
+from components.main_window import MainGUIWindow
+from utils.cache_utilis import clear_all_cache, make_cache_version_file
 
 def check_cache() -> bool:
     if not os.path.exists(CACHE_DIR):
@@ -27,17 +28,24 @@ def cache_version_handler() -> None:
 def dotenv_check():
     if not dotenv.find_dotenv():
         with open('.env', 'w') as f:
-            f.write('MOVIE_FOLDERS=""\nSHOW_FOLDERS=""\nMEDIA_PLAYER="wmplayer"')
+            f.write(
+                'MOVIE_FOLDERS=""\n'
+                'SHOW_FOLDERS=""\n'
+                'MEDIA_PLAYER="vlc"\n'
+                'SPEED="1"\n'
+            )
 
 def main():
     dotenv_check()
 
     app = QApplication([])
+    qm.apply_stylesheet(app, theme='dark_purple.xml')
 
     cache_version_handler()
 
     win = MainGUIWindow(movie_folders=MOVIE_FOLDERS, show_folders=SHOW_FOLDERS)
     win.show()
+    win.showMaximized()
 
     app.exec()
 

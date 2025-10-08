@@ -2,12 +2,13 @@ import os
 import subprocess
 from PyQt6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QCheckBox,
-    QFileDialog, QWidget, QScrollArea, QComboBox, QLineEdit, QSizePolicy
+    QFileDialog, QWidget, QScrollArea, QComboBox, QLineEdit, QSizePolicy,
+    QDoubleSpinBox
 )
 from PyQt6.QtCore import Qt
 
-from const import MOVIE_FOLDERS, SHOW_FOLDERS, CACHE_DIR, MEDIA_PLAYER
-from utils import copy_text
+from const import MOVIE_FOLDERS, SHOW_FOLDERS, CACHE_DIR, MEDIA_PLAYER, PLAY_SPEED
+from utils.utils import copy_text
 
 
 class SettingsMenu(QDialog):
@@ -16,7 +17,6 @@ class SettingsMenu(QDialog):
             parent=None,
             movie_folders: str = MOVIE_FOLDERS,
             show_folders: str = SHOW_FOLDERS,
-            cache_folder: str = CACHE_DIR,
             media_player: str = MEDIA_PLAYER
         ):
         super().__init__(parent)
@@ -35,25 +35,25 @@ class SettingsMenu(QDialog):
         # ─── Media Player Row ───
         player_row = QHBoxLayout()
         player_label = QLabel("Media Player:")
-        player_label.setFixedWidth(70)
+        player_label.setFixedWidth(75)
 
         self.media_player_edit = QLineEdit()
-        self.media_player_edit.setText(MEDIA_PLAYER)
-        self.media_player_edit.setFixedWidth(240)
+        self.media_player_edit.setText(media_player)
+        self.media_player_edit.setFixedWidth(190)
         self.media_player_edit.setReadOnly(True)
         self.media_player_edit.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
-        self.media_player_edit.setCursorPosition(len(self.media_player_edit.text()))  # user can't type directly
+        self.media_player_edit.setCursorPosition(len(self.media_player_edit.text()))
 
         buttons_layout = QHBoxLayout()
         buttons_layout.setSpacing(5)
 
         browse_button = QPushButton("Browse")
-        browse_button.setFixedWidth(70)
+        browse_button.setFixedWidth(100)
         browse_button.clicked.connect(self._browse_media_player)
         buttons_layout.addWidget(browse_button)
 
         copy_button = QPushButton("Copy")
-        copy_button.setFixedWidth(50)
+        copy_button.setFixedWidth(80)
         copy_button.clicked.connect(lambda: copy_text(self.media_player_edit.text()))
         buttons_layout.addWidget(copy_button)
 
@@ -62,15 +62,29 @@ class SettingsMenu(QDialog):
         player_row.addLayout(buttons_layout)
         outer_layout.addLayout(player_row)
 
+        # ─── Speed Row ───
+        self.speed_container = QWidget()
+        speed_row = QHBoxLayout()
+        speed_label = QLabel("Play Speed:")
+        speed_label.setFixedWidth(70)
+        
+        self.speed_spin = QDoubleSpinBox()
+        self.speed_spin.setRange(0.1, 2.0)
+        self.speed_spin.setSingleStep(0.1)
+        self.speed_spin.setValue(PLAY_SPEED if PLAY_SPEED < 2 and PLAY_SPEED > 0.1 else 1.0)
+        self.speed_spin.setDecimals(1)
+
+        speed_row.addWidget(speed_label)
+        speed_row.addWidget(self.speed_spin)
+        self.speed_container.setLayout(speed_row)
+        outer_layout.addWidget(self.speed_container)
+        self._update_speed_row()
+
         # ─── Clear Cache Button ───
         self.open_cache_button = QPushButton("Open Cache")
         self.open_cache_button.setFixedWidth(150)
         self.open_cache_button.clicked.connect(self.open_cache_folder)
         outer_layout.addWidget(self.open_cache_button, alignment=Qt.AlignmentFlag.AlignHCenter)
-
-        self.reverse_sorting = QCheckBox()
-        self.reverse_sorting.setText("Reverse Sorting")
-        outer_layout.addWidget(self.reverse_sorting, alignment=Qt.AlignmentFlag.AlignHCenter)
 
         # Combo box for switching types
         self.type_selector = QComboBox()
@@ -104,11 +118,19 @@ class SettingsMenu(QDialog):
 
         self.update_folder_list()
 
+    def _update_speed_row(self):
+        exe_basename = os.path.basename(self.media_player_edit.text())
+        if exe_basename == "vlc.exe":
+            self.speed_container.setVisible(True)
+        else:
+            self.speed_container.setVisible(False)
+
     def _browse_media_player(self):
             path, _ = QFileDialog.getOpenFileName(self, "Select Media Player exe", "", "Executable Files (*.exe)")
             if path:
                 self.media_player_edit.setText(os.path.normpath(path))
                 self.media_player_edit.setCursorPosition(len(path))
+                self._update_speed_row()
 
     @staticmethod
     def open_cache_folder():
@@ -135,7 +157,7 @@ class SettingsMenu(QDialog):
             row = QHBoxLayout()
             label = QLabel(folder)
             remove_btn = QPushButton("Remove")
-            remove_btn.setFixedWidth(80)
+            remove_btn.setFixedWidth(100)
             remove_btn.clicked.connect(lambda _, f=folder: self.remove_folder(f))
             row.addWidget(label)
             row.addStretch()

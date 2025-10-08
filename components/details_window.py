@@ -7,7 +7,7 @@ class MediaDetailsDialog(QDialog):
         super().__init__(parent)
         
         self.setWindowTitle(f"Details for {media.name}")
-        self.setGeometry(100, 100, 400, 300)
+        self.setBaseSize(400, 300)
 
         main_layout = QVBoxLayout()
         
@@ -63,6 +63,6 @@ class MediaDetailsDialog(QDialog):
 
         close_button = QPushButton("Close")
         close_button.clicked.connect(self.accept)
-        scroll_content_layout.addWidget(close_button)
+        main_layout.addWidget(close_button)
 
         self.setLayout(main_layout)

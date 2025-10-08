@@ -45,6 +45,7 @@ def main():
 
     win = MainGUIWindow(movie_folders=MOVIE_FOLDERS, show_folders=SHOW_FOLDERS)
     win.show()
+    win.showMaximized()
 
     app.exec()
 

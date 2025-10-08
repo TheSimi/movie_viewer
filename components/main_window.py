@@ -15,7 +15,7 @@ from utils.media import Movie, Show, Media
 from utils.cache_utilis import cache_path, clear_cache
 from const import MEDIA_PLAYER
 
-SCROLL_AREA_WIDTH = 680
+SCROLL_AREA_WIDTH = 900
 COMBO_BOX_WIDTH = 310
 
 class MainGUIWindow(QMainWindow):
@@ -277,8 +277,6 @@ class MainGUIWindow(QMainWindow):
                 btn.unload_image()
     
     def closeEvent(self, event):
-        print("Closing main window...")
-
         # Save the new folder paths from the settings to the .env file
         new_movie_folders = self.settings_window.movie_folders
         new_show_folders = self.settings_window.show_folders

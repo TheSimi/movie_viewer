@@ -136,10 +136,12 @@ class Movie(Media):
             self.image = UNKNOWN_POSTER
     
     @staticmethod
-    def _get_minutes(time_string: Union[str, list[str]]):
+    def _get_minutes(time_string: Union[str, list[str]]) -> int:
         if isinstance(time_string, list):
             time_string = time_string[0]
-        match = re.search(r'(\d+)h\s*(\d+)m::\((\d+)\s*min\)', time_string)
+        match = re.search(r'(\d+)h(?:\s*(\d+)m)?::\((\d+)\s*min\)', time_string)
+        if not match:
+            return 0
         return int(match.group(3))
 
     def _init_from_cache(

@@ -3,7 +3,7 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QPixmap
 from PIL.ImageQt import ImageQt
 
-from utils.media import Media, Show, Movie
+from media_classes import Media, Show, Movie
 from components.details_window import MediaDetailsDialog
 from components.play_window import PlayWindow
 from const import MEDIA_PLAYER
@@ -66,10 +66,10 @@ class MediaButton(QPushButton):
 
         self.clicked.connect(lambda: self.media.play(media_player=self.media_player, speed=self.speed))
 
-        self.enterEvent = lambda arg: self.setStyleSheet(FOCUSED_BUTTON_STYLESHEET)
-        self.leaveEvent = lambda arg: self.setStyleSheet(IDLE_BUTTON_STYLESHEET)
-        self.focusInEvent = lambda arg: self.setStyleSheet(FOCUSED_BUTTON_STYLESHEET)
-        self.focusOutEvent = lambda arg: self.setStyleSheet(IDLE_BUTTON_STYLESHEET)
+        self.enterEvent = lambda arg: self.setStyleSheet(FOCUSED_BUTTON_STYLESHEET) # type: ignore
+        self.leaveEvent = lambda arg: self.setStyleSheet(IDLE_BUTTON_STYLESHEET) # type: ignore
+        self.focusInEvent = lambda arg: self.setStyleSheet(FOCUSED_BUTTON_STYLESHEET) # type: ignore
+        self.focusOutEvent = lambda arg: self.setStyleSheet(IDLE_BUTTON_STYLESHEET) # type: ignore
 
         self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.customContextMenuRequested.connect(self._show_context_menu)
@@ -103,14 +103,20 @@ class MediaButton(QPushButton):
     
     def _del_cache_and_reload(self):
         self.media.delete_cache()
-        self.main_window._on_refresh_button_click()
+        self.main_window._on_refresh_button_click() # type: ignore
 
     @property
     def main_window(self) -> QMainWindow:
+        """
+        Returns the main window of the application.
+        
+        :return: The main window instance.
+        :rtype: MainGUIWindow
+        """
         current_widget = self
         while not current_widget.__class__.__name__ == 'MainGUIWindow':
             current_widget = current_widget.parent()
-        return current_widget
+        return current_widget # type: ignore
     
     def _get_confirmation(self) -> bool:
         confirmation = QMessageBox.question(
@@ -132,7 +138,7 @@ class MediaButton(QPushButton):
             return
         # assuming self.media is a Movie type
         self.media.remove_movie()
-        self.main_window._on_refresh_button_click()
+        self.main_window._on_refresh_button_click() # type: ignore
 
     def load_image(self):
         if not self.image_loaded:

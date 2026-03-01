@@ -4,7 +4,7 @@ from PyQt6.QtWidgets import (
 )
 
 from const import MEDIA_PLAYER
-from utils.media import Media
+from media_classes import Media
 
 class PlayWindow(QDialog):
     def __init__(self, media: Media, default_speed: float = 1, media_player: str = MEDIA_PLAYER, parent=None):

@@ -1,6 +1,6 @@
 from PyQt6.QtWidgets import QDialog, QVBoxLayout, QLabel, QPushButton, QWidget, QScrollArea
 
-from utils.media import Media, Movie, Show
+from media_classes import Media, Movie, Show
 
 class MediaDetailsDialog(QDialog):
     def __init__(self, media: Media, parent=None):

@@ -1,6 +1,5 @@
 import dotenv
 import os
-import tqdm
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QScrollArea, QLabel, QStackedLayout,
     QComboBox, QGridLayout, QPushButton, QHBoxLayout, QProgressBar
@@ -9,9 +8,8 @@ from PyQt6.QtGui import QFont
 from PyQt6.QtCore import Qt, QPoint, QTimer
 
 from components.media_button import MediaButton
-from utils.get_lists import get_file_list, get_movies_in_folder, get_shows_in_folder
 from components.setting_menu import SettingsMenu
-from utils.media import Movie, Show, Media
+from media_classes import Media, Movie, Show
 from utils.cache_utilis import cache_path, clear_cache
 from const import MEDIA_PLAYER
 
@@ -132,22 +130,21 @@ class MainGUIWindow(QMainWindow):
         self.stack.setCurrentWidget(self.main_screen)
 
     def init_show_movie_lists(self, movie_folders, show_folders):
-        self.movie_list = self._get_media_list(movie_folders, get_movies_in_folder, Movie)
-        self.show_list = self._get_media_list(show_folders, get_shows_in_folder, Show)
+        self.movie_list = self._get_media_list(movie_folders, Movie)
+        self.show_list = self._get_media_list(show_folders, Show)
     
     def _get_media_list(
         self,
         folder_list: list,
-        file_in_folder_func: callable,
-        file_class: Media,
+        file_class: Media.__class__,
     ) -> list:
-        file_path_list = get_file_list(folder_list, file_in_folder_func)
-
         self.progress_bar.show()
         self.progress_bar.setValue(0)
-        self.progress_bar.setMaximum(len(file_path_list))
+        self.progress_bar.setMaximum(len(folder_list))
 
-        media_list = self.load_file_list(file_path_list, file_class)
+        media_list = []
+        for folder in folder_list:
+            media_list.extend(file_class.from_folder(folder))
 
         self.progress_bar.hide()
         return media_list
@@ -158,9 +155,9 @@ class MainGUIWindow(QMainWindow):
         file_class: Media.__class__,
     ) -> list: 
         file_list = []
-        for file in tqdm.tqdm(file_path_list, desc=f"Loading {file_class.__name__} objects"):
+        for file in file_path_list:
             if os.path.exists(cache_path(file)):
-                file_list.append(file_class.load_from_cache(cache_path(file)))
+                file_list.append(file_class.from_cache(cache_path(file)))
             else:
                 instance = file_class(file)
                 file_list.append(instance)
@@ -276,7 +273,7 @@ class MainGUIWindow(QMainWindow):
             else:
                 btn.unload_image()
     
-    def closeEvent(self, event):
+    def closeEvent(self, event, *args, **kwargs):
         # Save the new folder paths from the settings to the .env file
         new_movie_folders = self.settings_window.movie_folders
         new_show_folders = self.settings_window.show_folders

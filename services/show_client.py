@@ -12,7 +12,7 @@ class ShowClient(ApiClient):
 
     @classmethod
     def get_media(cls, id: str) -> dict[str, any]:
-        return cls.get(f"/shows/{id}").json()
+        return cls.get(f"/shows/{id}", params={"embed": "episodes"}).json()
     
     @classmethod
     def get_poster(cls, id: str):
@@ -20,7 +20,6 @@ class ShowClient(ApiClient):
             i for i in cls.get(f"/shows/{id}/images").json()
             if i['type'] == 'poster'
         ][0]['resolutions']['original']['url']
-        print(url)
         response = cls.session.get(url)
         image = Image.open(io.BytesIO(response.content))
         image.thumbnail((300, 440))

@@ -24,8 +24,7 @@ class Movie(Media):
         self.runtime = self.data.get('duration', 0)
         self.year = int(self.data.get('datePublished', '0000-00-00').split('-')[0])
         
-        if self.data:
-            self.save_to_cache()
+        self.save_to_cache()
 
     @classmethod
     def from_folder(cls, dir_path: str) -> list:

@@ -39,8 +39,8 @@ class Media(abc.ABC):
         filename = os.path.splitext(os.path.basename(self.path))[0]
         try:
             self.id = client_class.search_media(filename)
-            self.data = client_class.get_media(self.id)
-            self.image = client_class.get_poster(self.id)
+            self.data = client_class.get_media(self.id, title=filename)
+            self.image = client_class.get_poster(self.id, title=filename)
         except Exception as e:
             logger.warning(f"Failed to fetch for {filename}: {e.__class__.__name__} | {e}")
             self.data = {}

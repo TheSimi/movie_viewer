@@ -14,7 +14,7 @@ class ShowClient(ApiClient):
         return cls.get("/singlesearch/shows", params={"q": title}).json()['id']
 
     @classmethod
-    def get_media(cls, id: str) -> dict[str, any]:
+    def get_media(cls, id: str, **kwargs) -> dict[str, any]:
         try:
             logger.debug(f"Getting show with id: {id}")
             return cls.get(f"/shows/{id}", params={"embed": "episodes"}).json()
@@ -23,7 +23,7 @@ class ShowClient(ApiClient):
             return {}
 
     @classmethod
-    def get_poster(cls, id: str):
+    def get_poster(cls, id: str, **kwargs):
         try:
             logger.debug(f"Getting poster for show with id: {id}")
             url: str = [

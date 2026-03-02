@@ -53,7 +53,7 @@ class ApiClient:
     
     @classmethod
     @abc.abstractmethod
-    def get_media(cls, id: str) -> dict[str, any]:
+    def get_media(cls, id: str, **kwargs) -> dict[str, any]:
         """
         Get a media by it's imdb id
         
@@ -66,7 +66,7 @@ class ApiClient:
     
     @classmethod
     @abc.abstractmethod
-    def get_poster(cls, id: str) -> Image.Image:
+    def get_poster(cls, id: str, **kwargs) -> Image.Image:
         """
         Get a media poster by it's imdb id
         

@@ -24,8 +24,7 @@ class Show(Media):
         self.episodes = len(self.data.get('_embedded', {}).get('episodes', []))
         self.seasons = max({episode['season'] for episode in self.data.get('_embedded', {}).get('episodes', [])}) if self.data.get('_embedded', {}).get('episodes') else 0
         
-        if self.data:
-            self.save_to_cache()
+        self.save_to_cache()
 
     @classmethod
     def from_folder(cls, dir_path: str) -> list:

@@ -1,5 +1,6 @@
 .env
 .cache/
+.vscode/
 
 __pycache__/
 
@@ -9,4 +10,4 @@ build/
 dist/
 *.spec
 
-roadmap.txt
+TODO.md

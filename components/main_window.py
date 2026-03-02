@@ -2,7 +2,7 @@ import dotenv
 import os
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QScrollArea, QLabel, QStackedLayout,
-    QComboBox, QGridLayout, QPushButton, QHBoxLayout, QProgressBar
+    QComboBox, QGridLayout, QPushButton, QHBoxLayout
 )
 from PyQt6.QtGui import QFont
 from PyQt6.QtCore import Qt, QPoint, QTimer
@@ -10,7 +10,7 @@ from PyQt6.QtCore import Qt, QPoint, QTimer
 from components.media_button import MediaButton
 from components.setting_menu import SettingsMenu
 from media_classes import Media, Movie, Show
-from utils.cache_utilis import cache_path, clear_cache
+from utils.cache_utilis import cache_path, clean_cache
 from const import MEDIA_PLAYER
 
 SCROLL_AREA_WIDTH = 900
@@ -42,14 +42,6 @@ class MainGUIWindow(QMainWindow):
         main_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         main_layout.setContentsMargins(20, 20, 20, 20)
         main_layout.setSpacing(20)
-
-        self.progress_bar = QProgressBar()
-        self.progress_bar.setFixedHeight(10)
-        self.progress_bar.setTextVisible(False)
-        self.progress_bar.setMaximum(100)
-        self.progress_bar.setValue(0)
-        self.progress_bar.hide()  # hidden by default
-        main_layout.addWidget(self.progress_bar)
 
         # Settings button row
         settings_bar = QHBoxLayout()
@@ -138,15 +130,9 @@ class MainGUIWindow(QMainWindow):
         folder_list: list,
         file_class: Media.__class__,
     ) -> list:
-        self.progress_bar.show()
-        self.progress_bar.setValue(0)
-        self.progress_bar.setMaximum(len(folder_list))
-
         media_list = []
         for folder in folder_list:
             media_list.extend(file_class.from_folder(folder))
-
-        self.progress_bar.hide()
         return media_list
     
     def load_file_list(
@@ -162,8 +148,6 @@ class MainGUIWindow(QMainWindow):
                 instance = file_class(file)
                 file_list.append(instance)
                 instance.save_to_cache()
-            
-            self.progress_bar.setValue(self.progress_bar.value() + 1)
         return file_list
 
     def open_settings_menu(self):
@@ -288,7 +272,7 @@ class MainGUIWindow(QMainWindow):
         dotenv.set_key(dotenv.find_dotenv(), "MEDIA_PLAYER", current_media_player)
         dotenv.set_key(dotenv.find_dotenv(), "SPEED",  current_speed)
 
-        clear_cache(self.movie_list, self.show_list, )
+        clean_cache(self.movie_list, self.show_list, )
 
         super().closeEvent(event)
     

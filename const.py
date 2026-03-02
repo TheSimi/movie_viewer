@@ -4,14 +4,16 @@ from PIL import Image, ImageDraw, ImageFont
 
 dotenv.load_dotenv(override=True)
 
+RETRY_AMOUNT = 5
+
 MOVIE_FOLDERS = os.getenv('MOVIE_FOLDERS').split(',') if os.getenv('MOVIE_FOLDERS') else []
 SHOW_FOLDERS = os.getenv('SHOW_FOLDERS').split(',') if os.getenv('SHOW_FOLDERS') else []
 try:
-    PLAY_SPEED = float(os.getenv('SPEED')) if os.getenv('SPEED') else 1.0
+    PLAY_SPEED = float(os.getenv('SPEED')) if os.getenv('SPEED') else 1.0 # type: ignore
 except ValueError:
     PLAY_SPEED = 1.0
 
-CACHE_DIR = os.path.join(os.getenv('LOCALAPPDATA'), "movie_viewer", ".cache")
+CACHE_DIR = os.path.join(os.getenv('LOCALAPPDATA'), "movie_viewer", ".cache") # type: ignore
 CACHE_VERSION = "0.2.1"
 
 MEDIA_PLAYER = os.getenv('MEDIA_PLAYER') if os.getenv('MEDIA_PLAYER') else "vlc"

@@ -18,11 +18,14 @@ class Movie(Media):
         
         self.is_file = os.path.isfile(self.path)
         
-        self.name = self.data['name']
-        self.plot = self.data['description']
-        self.rating = self.data['aggregateRating']['ratingValue']
-        self.runtime = self.data['duration']
-        self.year = int(self.data['datePublished'].split('-')[0])
+        self.name = self.data.get('name', os.path.splitext(os.path.basename(self.path))[0])
+        self.plot = self.data.get('description', '')
+        self.rating = self.data.get('aggregateRating', {}).get('ratingValue', 0)
+        self.runtime = self.data.get('duration', 0)
+        self.year = int(self.data.get('datePublished', '0000-00-00').split('-')[0])
+        
+        if self.data:
+            self.save_to_cache()
 
     @classmethod
     def from_folder(cls, dir_path: str) -> list:
@@ -42,18 +45,19 @@ class Movie(Media):
         media_list = []
         for f in os.listdir(dir_path):
             full_path = os.path.join(dir_path, f)
+            cache_path = cls.cache_path(full_path)
             if os.path.isdir(full_path):
                 if f.startswith("-"):
-                    if cls.cache_path(full_path):
-                        new_instance = cls.from_cache(cls.cache_path(full_path))
+                    if os.path.exists(cache_path):
+                        new_instance = cls.from_cache(cache_path)
                     else:
                         new_instance = cls(full_path)
                     media_list.append(new_instance)
                 else:
                     media_list.extend(cls.from_folder(full_path))
             elif os.path.isfile(full_path) and full_path.endswith(VIDEO_EXTENTIONS):
-                if cls.cache_path(dir_path):
-                    new_instance = cls.from_cache(cls.cache_path(full_path))
+                if os.path.exists(cache_path):
+                    new_instance = cls.from_cache(cache_path)
                 else:
                     new_instance = cls(full_path)
                 media_list.append(new_instance)

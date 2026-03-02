@@ -1,7 +1,9 @@
 import abc
 from requests import Session, Response
+from requests.exceptions import HTTPError
 from PIL import Image
 
+from const import RETRY_AMOUNT
 from services.logger import logger
 
 
@@ -21,12 +23,17 @@ class ApiClient:
     
     @classmethod
     def request(cls, method, url, *args, **kwargs) -> Response:
-        full_url = f"{cls.BASE_URL}/{url}"
-        logger.debug(f"Request: {method} {full_url}")
-        response = cls.session.request(method, full_url, *args, **kwargs)
-        response.raise_for_status()
-        return response
-    
+        for attempt in range(RETRY_AMOUNT):
+            try:
+                full_url = f"{cls.BASE_URL}/{url}"
+                logger.debug(f"Request Attemp #{attempt + 1}: {method} {full_url}")
+                response = cls.session.request(method, full_url, *args, **kwargs)
+                response.raise_for_status()
+                return response
+            except HTTPError as e:
+                logger.error(f"Failed to make request to {url}: {e.response.status_code} | {e.response.text}")
+        raise Exception(f"Failed to make request to {url} after {RETRY_AMOUNT} attempts")
+
     @classmethod
     def get(cls, url, *args, **kwargs) -> Response:
         return cls.request("GET", url, *args, **kwargs)

@@ -17,12 +17,15 @@ class Show(Media):
         if kwargs:
             return
         
-        self.name = self.data['name']
-        self.plot = re.sub(r'<.*?>', '', self.data['summary'])
-        self.rating = self.data['rating']['average']
-        self.year = self.data['premiered'].split('-')[0]
-        self.episodes = len(self.data['_embedded']['episodes'])
-        self.seasons = max({episode['season'] for episode in self.data['_embedded']['episodes']})
+        self.name = self.data.get('name', os.path.splitext(os.path.basename(self.path))[0])
+        self.plot = re.sub(r'<.*?>', '', self.data.get('summary', ''))
+        self.rating = self.data.get('rating', {}).get('average', 0)
+        self.year = int(self.data.get('premiered', '0000-00-00').split('-')[0])
+        self.episodes = len(self.data.get('_embedded', {}).get('episodes', []))
+        self.seasons = max({episode['season'] for episode in self.data.get('_embedded', {}).get('episodes', [])}) if self.data.get('_embedded', {}).get('episodes') else 0
+        
+        if self.data:
+            self.save_to_cache()
 
     @classmethod
     def from_folder(cls, dir_path: str) -> list:
@@ -46,8 +49,9 @@ class Show(Media):
                 if f.startswith("-"):
                     return cls.from_folder(full_path)
                 else:
-                    if cls.cache_path(full_path):
-                        new_instance = cls.from_cache(cls.cache_path(full_path))
+                    cache_path = cls.cache_path(full_path)
+                    if os.path.exists(cache_path):
+                        new_instance = cls.from_cache(cache_path)
                     else:
                         new_instance = cls(full_path)
                     show_list.append(new_instance)

@@ -5,8 +5,9 @@ import shutil
 from typing import Type
 from PIL import Image
 
-from const import CACHE_DIR, MEDIA_PLAYER
+from const import CACHE_DIR, MEDIA_PLAYER, UNKNOWN_POSTER
 from services.api_client import ApiClient
+from services.logger import logger
 
 class Media(abc.ABC):
     _KEYS: list[str]
@@ -35,10 +36,15 @@ class Media(abc.ABC):
         if kwargs:
             self.init_kwargs(**kwargs)
             return
-        filename = os.path.basename(self.path)
-        self.id = client_class.search_media(filename)
-        self.data = client_class.get_media(self.id)
-        self.image = client_class.get_poster(self.id)
+        filename = os.path.splitext(os.path.basename(self.path))[0]
+        try:
+            self.id = client_class.search_media(filename)
+            self.data = client_class.get_media(self.id)
+            self.image = client_class.get_poster(self.id)
+        except Exception as e:
+            logger.warning(f"Failed to fetch for {filename}: {e.__class__.__name__} | {e}")
+            self.data = {}
+            self.image = UNKNOWN_POSTER
     
     def init_kwargs(self, **kwargs):
         # ensure all required arguments are present

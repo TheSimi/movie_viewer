@@ -1,8 +1,12 @@
 import re
 import os
 import json
+import shutil
+import subprocess
 
+from const import MEDIA_PLAYER
 from media_classes.media import Media
+from services.logger import logger
 from services.show_client import ShowClient
 
 class Show(Media):
@@ -64,6 +68,26 @@ class Show(Media):
         with open(json_path, 'w') as f:
             json.dump(metadata, f, indent=2)
     
+    @property
+    def episode_list(self) -> list[str]:
+        episode_list = []
+        for f in os.listdir(self.path):
+            full_path = os.path.join(self.path, f)
+            if os.path.isfile(full_path):
+                episode_list.append(f)
+        episode_list.sort(key=self._comapare_episodes)
+        return episode_list
+    
+    @staticmethod
+    def _comapare_episodes(episode_name: str):
+        episode_name = os.path.splitext(episode_name)[0]
+        episode_as_list = re.findall(r'\D+|\d+', episode_name)
+        episode_digit_list = []
+        for episode in episode_as_list:
+            if episode.isdigit():
+                episode_digit_list.append(float(episode))
+        return episode_digit_list
+    
     def _get_values(self) -> tuple[int, float, str, str, int]:
         """
         Returns a tuple the year, rating, name, path and episode count of the show, in that order
@@ -74,3 +98,45 @@ class Show(Media):
         year, rating, name, path = super()._get_values()
         length: int = getattr(self, 'episodes', 0)
         return year, rating, name, path, length
+    
+    def play(self, media_player: str = MEDIA_PLAYER, speed: float = 1):
+        if self.episode_list:
+            if not os.path.exists(os.path.join(self.path, "watched")):
+                os.makedirs(os.path.join(self.path, "watched"))
+
+            current_episode = self.episode_list[0]
+            shutil.move(
+                os.path.join(self.path, current_episode),
+                os.path.join(self.path, "watched", current_episode)
+            )
+            current_episode = os.path.join(self.path, "watched", current_episode)
+            logger.info(f"Playing episode {current_episode} of show {self.name} with {media_player} at speed {speed}")
+            if self.is_vlc(media_player):
+                subprocess.Popen(f'"{media_player}" "{current_episode}" --rate={speed} --play-and-exit')
+            else:
+                logger.warning(f"Playing episode {current_episode} of show {self.name} with {media_player} at speed {speed} without speed control, because the media player is not VLC")
+                subprocess.Popen(f'"{media_player}" "{current_episode}"')
+        else:
+            logger.warning(f"No episodes found for show {self.name} in path {self.path}, opening folder instead")
+            try:
+                file = os.path.join(self.path, os.listdir(self.path)[0])
+            except IndexError:
+                logger.warning(f"No files in show folder {self.path}")
+                file = self.path
+            subprocess.Popen(f'explorer /select,"{file}"')
+    
+    def open_in_explorer(self):
+        if not os.path.exists(self.path):
+            logger.warning(f"Path {self.path} does not exist, cannot open in explorer")
+            return
+        files_list = os.listdir(self.path)
+        try:
+            file = os.path.join(self.path, files_list[0])
+        except IndexError:
+            logger.warning(f"Show folder {self.path} is empty")
+            file = self.path
+        subprocess.Popen(f'explorer /select,"{file}"')
+    
+    def remove_watched_folder(self):
+        if os.path.exists(os.path.join(self.path, "watched")):
+            shutil.rmtree(os.path.join(self.path, "watched"))

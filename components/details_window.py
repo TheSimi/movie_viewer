@@ -30,10 +30,6 @@ class MediaDetailsDialog(QDialog):
         scroll_content_layout.addWidget(rating_label)
         
         if isinstance(media, Movie):
-            metacritic_label = QLabel(f"<b>Metacritic Score:</b> {media.metacritic}")
-            metacritic_label.setStyleSheet("font-size: 14px; margin-bottom: 10px;")
-            scroll_content_layout.addWidget(metacritic_label)
-            
             runtime_label = QLabel(f"<b>Runtime:</b> {media.runtime}")
             runtime_label.setStyleSheet("font-size: 14px; margin-bottom: 10px;")
             scroll_content_layout.addWidget(runtime_label)

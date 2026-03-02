@@ -1,14 +1,19 @@
 import abc
 import json
 import os
+import shutil
 from typing import Type
 from PIL import Image
 
-from const import CACHE_DIR
+from const import CACHE_DIR, MEDIA_PLAYER
 from services.api_client import ApiClient
 
 class Media(abc.ABC):
     _KEYS: list[str]
+    name: str
+    year: int
+    rating: float
+    plot: str
     
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
@@ -57,6 +62,10 @@ class Media(abc.ABC):
             char_sum += ord(i)
         basename = basename + '_' + str(char_sum)
         return os.path.join(CACHE_DIR, basename)
+    
+    @staticmethod
+    def is_vlc(media_player: str):
+        return os.path.basename(media_player).lower() in ['vlc', 'vlc.exe']
 
     @classmethod
     def from_cache(cls, path: str):
@@ -116,3 +125,29 @@ class Media(abc.ABC):
         if not os.path.isdir(dir_path):
             raise ValueError(f"{dir_path} is not a directory")
         return []
+    
+    @abc.abstractmethod
+    def play(self, media_player: str = MEDIA_PLAYER, speed: float = 1):
+        """
+        Plays the media with the given media player and speed.
+        Needs to be implemented on every subclass, default implementation does nothing.
+
+        :param media_player: The media player executable path to use
+        :type media_player: str
+        :param speed: The speed to play the media at, defaults to 1
+        :type speed: float, optional
+        """
+        pass
+    
+    @abc.abstractmethod
+    def open_in_explorer(self):
+        """
+        Opens the media in the system's default file explorer.
+        Needs to be implemented on every subclass, default implementation does nothing.
+        """
+        pass
+    
+    def delete_cache(self):
+        cache_path = self.cache_path(self.path)
+        if os.path.exists(cache_path):
+            shutil.rmtree(cache_path)

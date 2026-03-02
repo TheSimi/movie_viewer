@@ -56,7 +56,7 @@ class MediaButton(QPushButton):
         self.main_layout.addWidget(self.rating_label)
         
         if isinstance(self.media, Movie):
-            self.length_label = QLabel(f"[ {media.runtime//60:02d}:{media.runtime%60:02d} ]")
+            self.length_label = QLabel(f"[ {self.media.runtime//60:02d}:{self.media.runtime%60:02d} ]")
             self.length_label.setWordWrap(True)
             self.length_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
             self.length_label.setStyleSheet(TEXT_LABEL_STYLESHEET)
@@ -86,7 +86,7 @@ class MediaButton(QPushButton):
         delete_cache_and_reload.triggered.connect(self._del_cache_and_reload)
         if isinstance(self.media, Show):
             rm_wached = context_menu.addAction("Delete wached")
-            rm_wached.triggered.connect(self._remove_wached_folder)
+            rm_wached.triggered.connect(self._remove_watched_folder)
         elif isinstance(self.media, Movie):
             rm_movie = context_menu.addAction("Delete movie")
             rm_movie.triggered.connect(self._remove_movie)
@@ -127,14 +127,14 @@ class MediaButton(QPushButton):
         )
         return confirmation == QMessageBox.StandardButton.Yes
 
-    def _remove_wached_folder(self):
-        if not self._get_confirmation():
+    def _remove_watched_folder(self):
+        if not self._get_confirmation() or not isinstance(self.media, Show):
             return
         # assuming self.media is a Show type
-        self.media.remove_wached_folder()
+        self.media.remove_watched_folder()
     
     def _remove_movie(self):
-        if not self._get_confirmation():
+        if not self._get_confirmation() or not isinstance(self.media, Movie):
             return
         # assuming self.media is a Movie type
         self.media.remove_movie()

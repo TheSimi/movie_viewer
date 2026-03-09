@@ -1,5 +1,4 @@
 import dotenv
-import os
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QScrollArea, QLabel, QStackedLayout,
     QComboBox, QGridLayout, QHBoxLayout
@@ -11,7 +10,7 @@ from components.media_button import MediaButton
 from components.setting_menu import SettingsMenu
 from media_classes import Media, Movie, Show
 from qt_utils.load_media_worker import LoadMediaWorker
-from utils.cache_utilis import cache_path, clean_cache
+from utils.cache_utilis import clean_cache
 from qt_utils.push_button import PushButton
 from const import MEDIA_PLAYER
 
@@ -25,12 +24,7 @@ class MainGUIWindow(QMainWindow):
 
         self.settings_menu = SettingsMenu(self, movie_folders, show_folders)
 
-        self.media_buttons = []
-        self.show_list: list[Show] = []
-        self.movie_list: list[Movie] = []
-        self.loading_threads: dict[type, QThread] = {}
-        self.loading_workers: dict[type, LoadMediaWorker] = {}
-        self.init_show_movie_lists(movie_folders, show_folders)
+        self._init_media(movie_folders, show_folders)
         self.media_player = MEDIA_PLAYER
 
     def _init_ui(self):
@@ -124,7 +118,19 @@ class MainGUIWindow(QMainWindow):
         self.stack.addWidget(self.main_screen)
         self.stack.setCurrentWidget(self.main_screen)
 
-    def init_show_movie_lists(self, movie_folders, show_folders):
+    def _init_media(self, movie_folders, show_folders):
+        self.media_buttons = []
+        self.show_list: list[Show] = []
+        self.movie_list: list[Movie] = []
+        self.loading_threads: dict[type, QThread] = {}
+        self.loading_workers: dict[type, LoadMediaWorker] = {}
+        
+        self.load_show_movie_lists(movie_folders, show_folders)
+
+    def load_show_movie_lists(self, movie_folders, show_folders):
+        """
+        Load the movie and show lists, each in a separate thread
+        """
         self._get_media_list_async(movie_folders, Movie)
         self._get_media_list_async(show_folders, Show)
     
@@ -150,21 +156,6 @@ class MainGUIWindow(QMainWindow):
             self.show_list = media_list
         
         self.resort_media_list()
-    
-    def load_file_list(
-        self,
-        file_path_list: list,
-        file_class: Media.__class__,
-    ) -> list: 
-        file_list = []
-        for file in file_path_list:
-            if os.path.exists(cache_path(file)):
-                file_list.append(file_class.from_cache(cache_path(file)))
-            else:
-                instance = file_class(file)
-                file_list.append(instance)
-                instance.save_to_cache()
-        return file_list
 
     def open_settings_menu(self):
         self.settings_menu.exec()
@@ -173,8 +164,7 @@ class MainGUIWindow(QMainWindow):
         new_show_folders = self.settings_menu.show_folders
         self.media_player = self.settings_menu.media_player_edit.text()
 
-        self.init_show_movie_lists(new_movie_folders, new_show_folders)
-        self.resort_media_list()
+        self.load_show_movie_lists(new_movie_folders, new_show_folders)
 
     def update_display(self):
         while self.grid_layout.count():
@@ -253,8 +243,7 @@ class MainGUIWindow(QMainWindow):
         new_movie_folders = self.settings_menu.movie_folders
         new_show_folders = self.settings_menu.show_folders
 
-        self.init_show_movie_lists(new_movie_folders, new_show_folders)
-        self.resort_media_list()
+        self.load_show_movie_lists(new_movie_folders, new_show_folders)
 
     def lazy_load_visible_buttons(self):
         scroll_value = self.scroll_area.verticalScrollBar().value()
@@ -288,7 +277,7 @@ class MainGUIWindow(QMainWindow):
         dotenv.set_key(dotenv.find_dotenv(), "MEDIA_PLAYER", current_media_player)
         dotenv.set_key(dotenv.find_dotenv(), "SPEED",  current_speed)
 
-        clean_cache(self.movie_list, self.show_list, )
+        clean_cache(self.movie_list, self.show_list)
 
         super().closeEvent(event)
     

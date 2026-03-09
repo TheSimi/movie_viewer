@@ -12,6 +12,7 @@ from media_classes import Media, Movie, Show
 from qt_utils.load_media_worker import LoadMediaWorker
 from utils.cache_utilis import clean_cache
 from qt_utils.push_button import PushButton
+from services.logger import logger
 from const import MEDIA_PLAYER
 
 SCROLL_AREA_WIDTH = 900
@@ -139,13 +140,19 @@ class MainGUIWindow(QMainWindow):
         folder_list: list,
         file_class: Media.__class__,
     ):
+        if self.loading_threads.get(file_class, None) or self.loading_workers.get(file_class, None):
+            logger.warning(f"Already loading {file_class.__name__} list, skipping new load request.")
+            return
         self.loading_threads[file_class] = QThread()
         self.loading_workers[file_class] = LoadMediaWorker(folder_list, file_class)
         self.loading_workers[file_class].moveToThread(self.loading_threads[file_class])
 
         self.loading_threads[file_class].started.connect(self.loading_workers[file_class].run)
+        
         self.loading_workers[file_class].finished.connect(lambda media_list: self._on_media_loaded(media_list, file_class))
+        
         self.loading_threads[file_class].finished.connect(self.loading_threads[file_class].deleteLater)
+        self.loading_threads[file_class].finished.connect(lambda: self.loading_threads.pop(file_class, None))
     
         self.loading_threads[file_class].start()
     
@@ -154,6 +161,12 @@ class MainGUIWindow(QMainWindow):
             self.movie_list = media_list
         else:
             self.show_list = media_list
+        
+        self.loading_workers[file_class].deleteLater()
+        self.loading_workers.pop(file_class, None)
+        
+        self.loading_threads[file_class].quit()
+        self.loading_threads[file_class].wait()
         
         self.resort_media_list()
 

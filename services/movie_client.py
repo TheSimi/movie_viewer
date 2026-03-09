@@ -32,7 +32,12 @@ class MovieClient(ApiClient):
         """
         try:
             logger.debug(f"Getting movie with id: {id}")
-            return cls.get(f"search", params={"tt": id}).json()['short']
+            data = cls.get(f"search", params={"tt": id}).json()['short']
+            if title:
+                media_title = cls.get_media_name(title)
+                if media_title:
+                    data['name'] = media_title
+            return data
         except Exception as e:
             logger.warning(f"Failed to fetch data with fm-db api for {id}: {e.__class__.__name__} | {e}")
             try:
@@ -44,6 +49,21 @@ class MovieClient(ApiClient):
                     return cls.get_media_by_title(title)
                 return {}
     
+    @classmethod
+    def get_media_name(cls, title: str) -> Optional[str]:
+        """
+        Fetch the name of a media item by its title.
+        
+        This is used because when dealing with a foriegn movie, the fm-db api returns
+        the title in the original language, so we need to make another request to get the english title.
+        """
+        try:
+            logger.debug(f"Getting media name for title: {title}")
+            return cls.get("search", params={"q": title}).json()['description'][0]['#TITLE']
+        except Exception as e:
+            logger.warning(f"Failed to fetch media name for title {title}: {e.__class__.__name__} | {e}")
+            return None
+
     @classmethod
     def get_media_by_title(cls, title: str):
         """

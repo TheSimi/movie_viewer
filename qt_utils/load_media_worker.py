@@ -1,4 +1,3 @@
-import time
 from PyQt6.QtCore import QObject, pyqtSignal
 
 from media_classes import Media
@@ -11,10 +10,11 @@ class LoadMediaWorker(QObject):
         
         self.folder_list = folder_list
         self.file_class = file_class
+        self._is_running = False
     
     def run(self):
         media_list = []
         for folder in self.folder_list:
             media_list.extend(self.file_class.from_folder(folder))
-        time.sleep(0.5) # simulate loading time
         self.finished.emit(media_list)
+        

@@ -9,5 +9,6 @@ venv/
 build/
 dist/
 *.spec
+main.*
 
 TODO.md

@@ -43,3 +43,8 @@ if 'text_bbox' in locals():
     _unknown_poster_x -= _unknown_poster_text_bbox[0]
     _unknown_poster_y -= _unknown_poster_text_bbox[1]
 _unknown_poster_draw.text((_unknown_poster_x, _unknown_poster_y), "?", fill='white', font=_unknown_poster_font)
+
+IDLE_BUTTON_STYLESHEET = "border: 2px solid #222; background-color: none; border-radius: 4px; color: white;"
+FOCUSED_BUTTON_STYLESHEET = "border: 2px solid white; background-color: none; border-radius: 4px; color: white;"
+TEXT_LABEL_STYLESHEET = "color: white; background: none; border: none;"
+IMAGE_LABEL_STYLESHEET = "background: none; border: none;"

@@ -1,5 +1,6 @@
-from PyQt6.QtWidgets import QDialog, QVBoxLayout, QLabel, QPushButton, QWidget, QScrollArea
+from PyQt6.QtWidgets import QDialog, QVBoxLayout, QLabel, QWidget, QScrollArea
 
+from qt_utils.push_button import PushButton
 from media_classes import Media, Movie, Show
 
 class MediaDetailsDialog(QDialog):
@@ -57,7 +58,7 @@ class MediaDetailsDialog(QDialog):
 
         main_layout.addWidget(scroll_area)
 
-        close_button = QPushButton("Close")
+        close_button = PushButton("Close")
         close_button.clicked.connect(self.accept)
         main_layout.addWidget(close_button)
 

@@ -47,3 +47,24 @@ def make_cache_version_file():
     version_file = os.path.join(CACHE_DIR, "version.txt")
     with open(version_file, 'w') as f:
         f.write(CACHE_VERSION)
+
+def check_cache() -> bool:
+    if not os.path.exists(CACHE_DIR):
+        return False
+    version_file = os.path.join(CACHE_DIR, "version.txt")
+    if not os.path.exists(version_file):
+        return False
+    with open(version_file, 'r') as f:
+        version = f.read().strip()
+    return version == CACHE_VERSION
+
+def cache_version_handler() -> None:
+    """
+    Checks if the cache is valid by checking the cache version file.
+    """
+    if not check_cache():
+        os.makedirs(CACHE_DIR, exist_ok=True)
+        clear_all_cache()
+
+        # Update cache version
+        make_cache_version_file()

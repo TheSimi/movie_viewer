@@ -1,4 +1,4 @@
-from PyQt6.QtWidgets import QPushButton, QVBoxLayout, QLabel, QMenu, QMessageBox, QMainWindow
+from PyQt6.QtWidgets import QVBoxLayout, QLabel, QMenu, QMessageBox, QMainWindow
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QPixmap
 from PIL.ImageQt import ImageQt
@@ -6,14 +6,10 @@ from PIL.ImageQt import ImageQt
 from media_classes import Media, Show, Movie
 from components.details_window import MediaDetailsDialog
 from components.play_window import PlayWindow
-from const import MEDIA_PLAYER
+from const import MEDIA_PLAYER, TEXT_LABEL_STYLESHEET, IMAGE_LABEL_STYLESHEET
+from qt_utils.push_button import PushButton
 
-IDLE_BUTTON_STYLESHEET = "border: 2px solid #222; background-color: none; border-radius: 4px;"
-FOCUSED_BUTTON_STYLESHEET = "border: 2px solid white; background-color: none; border-radius: 4px;"
-TEXT_LABEL_STYLESHEET = "color: white; background: none; border: none;"
-IMAGE_LABEL_STYLESHEET = "background: none; border: none;"
-
-class MediaButton(QPushButton):
+class MediaButton(PushButton):
     def __init__(
             self,
             media: Media,
@@ -27,7 +23,6 @@ class MediaButton(QPushButton):
         self.media_player = media_player
         self.setCheckable(True)
         self.setFixedSize(200, 330)
-        self.setStyleSheet(IDLE_BUTTON_STYLESHEET)
 
         # Image display
         self.image_label = QLabel()
@@ -65,11 +60,6 @@ class MediaButton(QPushButton):
         self.setLayout(self.main_layout)
 
         self.clicked.connect(lambda: self.media.play(media_player=self.media_player, speed=self.speed))
-
-        self.enterEvent = lambda arg: self.setStyleSheet(FOCUSED_BUTTON_STYLESHEET) # type: ignore
-        self.leaveEvent = lambda arg: self.setStyleSheet(IDLE_BUTTON_STYLESHEET) # type: ignore
-        self.focusInEvent = lambda arg: self.setStyleSheet(FOCUSED_BUTTON_STYLESHEET) # type: ignore
-        self.focusOutEvent = lambda arg: self.setStyleSheet(IDLE_BUTTON_STYLESHEET) # type: ignore
 
         self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.customContextMenuRequested.connect(self._show_context_menu)

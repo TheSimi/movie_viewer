@@ -1,4 +1,5 @@
 import os
+import re
 import json
 import shutil
 import subprocess
@@ -21,7 +22,10 @@ class Movie(Media):
         self.name = self.data.get('name', os.path.splitext(os.path.basename(self.path))[0])
         self.plot = self.data.get('description', '')
         self.rating = self.data.get('aggregateRating', {}).get('ratingValue', 0)
-        self.runtime = self.data.get('duration', 0)
+        try:
+            self.runtime = int(self.data.get('duration', 0))
+        except ValueError:
+            self.runtime = self.get_time_from_string(self.data.get('duration', 'PT0H0M'))
         self.year = int(self.data.get('datePublished', '0000-00-00').split('-')[0])
         
         self.save_to_cache()
@@ -201,3 +205,13 @@ class Movie(Media):
             os.remove(self.path)
         else:
             shutil.rmtree(self.path)
+    
+    @staticmethod
+    def get_time_from_string(time_string: str):
+        match = re.search(r'PT(?:(\d+)H)?(?:(\d+)M)?', time_string)
+    
+        hours = int(match.group(1) or 0)
+        minutes = int(match.group(2) or 0)
+    
+        return (hours * 60) + minutes
+    

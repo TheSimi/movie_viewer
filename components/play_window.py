@@ -1,10 +1,10 @@
 from PyQt6.QtWidgets import (
-    QDialog, QVBoxLayout, QHBoxLayout, QDoubleSpinBox,
-    QPushButton, QLabel
+    QDialog, QVBoxLayout, QHBoxLayout, QDoubleSpinBox, QLabel
 )
 
 from const import MEDIA_PLAYER
 from media_classes import Media
+from qt_utils.push_button import PushButton
 
 class PlayWindow(QDialog):
     def __init__(self, media: Media, default_speed: float = 1, media_player: str = MEDIA_PLAYER, parent=None):
@@ -33,10 +33,10 @@ class PlayWindow(QDialog):
         # Buttons Layout
         buttons_layout = QHBoxLayout()
         
-        self.cancel_button = QPushButton("Cancel")
+        self.cancel_button = PushButton("Cancel")
         self.cancel_button.clicked.connect(self.reject)
         
-        self.play_button = QPushButton("Play")
+        self.play_button = PushButton("Play")
         self.play_button.setDefault(True)
         self.play_button.clicked.connect(self.play_media_and_close)
         

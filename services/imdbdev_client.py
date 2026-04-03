@@ -16,26 +16,21 @@ class ImdbdevClient(ApiClient):
     @classmethod
     def search_media(cls, title: str) -> str:
         logger.debug(f"[Imdbdev] Searching for movie with title: {title}")
-        return cls.get("search/title", params={"query": title}).json()["titles"][0]["id"]
+        return cls.get("search/titles", params={"query": title}).json()["titles"][0]["id"]
     
     @classmethod
     def get_media(cls, id: str, **kwargs) -> dict[str, Any]:
         logger.debug(f"[Imdbdev] Getting media with id: {id}")
-        return cls.get(f"title/{id}").json()
+        return cls.get(f"titles/{id}").json()
     
     @classmethod
     def get_poster(cls, id: str, **kwargs):
         logger.debug(f"[Imdbdev] Getting poster for media with id: {id}")
-        poster_url = cls.get_media(id)["poster"]["url"]
+        poster_url = cls.get_media(id)["primaryImage"]["url"]
         response = cls.session.get(poster_url)
         image = Image.open(io.BytesIO(response.content))
         image.thumbnail((300, 440))
         return image.convert("RGB")
-    
-    @classmethod
-    def get_rating_by_id(cls, id: str) -> float:
-        logger.debug(f"[Imdbdev] Getting rating for media with id: {id}")
-        return cls.get_media(id)["rating"]["aggregateRating"]
     
     @staticmethod
     def format_for_movie(data: dict) -> dict:
@@ -43,7 +38,7 @@ class ImdbdevClient(ApiClient):
             'name': data['primaryTitle'],
             'description': data['plot'],
             'aggregateRating': {'ratingValue': data["rating"]["aggregateRating"]},
-            'duration': data['runtimeSeconds'],
+            'duration': data['runtimeSeconds'] // 60,
             'datePublished': f"{data['startYear']}-00-00"
         }
     

@@ -3,6 +3,10 @@ from PyQt6.QtCore import QObject, pyqtSignal
 from media_classes import Media
 
 class LoadMediaWorker(QObject):
+    """
+    A worker class to load media files from a list of folders
+    in the background on a separate thread
+    """
     finished = pyqtSignal(list)
     
     def __init__(self, folder_list: list, file_class: Media.__class__, parent: QObject | None = None) -> None:

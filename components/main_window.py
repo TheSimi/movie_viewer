@@ -87,7 +87,9 @@ class MainGUIWindow(QMainWindow):
         self.refresh_button.setText("⭮")
         self.refresh_button.setFont(QFont("Arial", 14))
         self.refresh_button.setFixedWidth(50)
-        self.refresh_button.clicked.connect(self._on_refresh_button_click)
+        self.refresh_button.clicked.connect(
+            self._on_refresh_button_click
+        )
 
         top_controls_layout.addWidget(self.refresh_button)
         top_controls_layout.addWidget(self.list_type_combo)
@@ -121,8 +123,7 @@ class MainGUIWindow(QMainWindow):
 
     def _init_media(self, movie_folders, show_folders):
         self.media_buttons = []
-        self.show_list: list[Show] = []
-        self.movie_list: list[Movie] = []
+        self.media_lists: dict[type, list[Media]] = {Movie: [], Show: []}
         self.loading_threads: dict[type, QThread] = {}
         self.loading_workers: dict[type, LoadMediaWorker] = {}
         
@@ -140,44 +141,54 @@ class MainGUIWindow(QMainWindow):
         folder_list: list,
         file_class: Media.__class__,
     ):
+        # Check if we are in the process of loading
         if self.loading_threads.get(file_class, None) or self.loading_workers.get(file_class, None):
             logger.warning(f"Already loading {file_class.__name__} list, skipping new load request.")
             return
+        
+        # Init worker and thread
         self.loading_threads[file_class] = QThread()
         self.loading_workers[file_class] = LoadMediaWorker(folder_list, file_class)
         self.loading_workers[file_class].moveToThread(self.loading_threads[file_class])
-
-        self.loading_threads[file_class].started.connect(self.loading_workers[file_class].run)
         
+        # Connect signals for start and end
+        self.loading_threads[file_class].started.connect(self.loading_workers[file_class].run)
         self.loading_workers[file_class].finished.connect(lambda media_list: self._on_media_loaded(media_list, file_class))
         
+        # Clean up thread and worker after finishing
         self.loading_threads[file_class].finished.connect(self.loading_threads[file_class].deleteLater)
         self.loading_threads[file_class].finished.connect(lambda: self.loading_threads.pop(file_class, None))
     
+        # Start loading in the background
         self.loading_threads[file_class].start()
     
     def _on_media_loaded(self, media_list, file_class):
-        if file_class == Movie:
-            self.movie_list = media_list
-        else:
-            self.show_list = media_list
+        # Update media list
+        self.media_lists[file_class] = media_list
         
+        # Clean up workers
         self.loading_workers[file_class].deleteLater()
         self.loading_workers.pop(file_class, None)
         
+        # Close thread
         self.loading_threads[file_class].quit()
         self.loading_threads[file_class].wait()
         
+        # Update display
         self.resort_media_list()
 
     def open_settings_menu(self):
+        """
+        Open the settings menu, and update the settings when done
+        """
         self.settings_menu.exec()
 
-        new_movie_folders = self.settings_menu.movie_folders
-        new_show_folders = self.settings_menu.show_folders
         self.media_player = self.settings_menu.media_player_edit.text()
 
-        self.load_show_movie_lists(new_movie_folders, new_show_folders)
+        self.load_show_movie_lists(
+            self.settings_menu.movie_folders,
+            self.settings_menu.show_folders
+        )
 
     def update_display(self):
         while self.grid_layout.count():
@@ -185,7 +196,7 @@ class MainGUIWindow(QMainWindow):
             if item.widget():
                 item.widget().deleteLater()
 
-        current_list = self.show_list if self.list_type_combo.currentText() == "Shows" else self.movie_list
+        current_list = self.media_lists[Show if self.list_type_combo.currentText() == "Shows" else Movie]
         current_speed = self.settings_menu.speed_spin.value()
 
         self.media_buttons = []
@@ -201,22 +212,23 @@ class MainGUIWindow(QMainWindow):
     def resort_media_list(self):
         sort_option = self.sort_combo.currentText()
         current_type = self.list_type_combo.currentText()
-        reverse_sorting = True if self.reverse_button.text() == "▲" else False
+        reverse_sorting = self.reverse_button.text() == "▲"
 
         # Get the correct list to sort
-        media_list = self.show_list if current_type == "Shows" else self.movie_list
+        media_list = self.media_lists[Show if current_type == "Shows" else Movie]
 
         # Sorting logic
-        if sort_option == "Name":
-            media_list.sort(key=self._sort_by_name, reverse=reverse_sorting)
-        elif sort_option == "Year":
-            media_list.sort(key=self._sort_by_year, reverse=reverse_sorting)
-        elif sort_option == "Rating":
-            media_list.sort(key=self._sort_by_rating, reverse=reverse_sorting)
-        elif sort_option == "Path":
-            media_list.sort(key=self._sort_by_path, reverse=reverse_sorting)
-        elif sort_option == "Length":
-            media_list.sort(key=self._sort_by_length, reverse=reverse_sorting)
+        match sort_option:
+            case "Name":
+                media_list.sort(key=self._sort_by_name, reverse=reverse_sorting)
+            case "Year":
+                media_list.sort(key=self._sort_by_year, reverse=reverse_sorting)
+            case "Rating":
+                media_list.sort(key=self._sort_by_rating, reverse=reverse_sorting)
+            case "Path":
+                media_list.sort(key=self._sort_by_path, reverse=reverse_sorting)
+            case "Length":
+                media_list.sort(key=self._sort_by_length, reverse=reverse_sorting)
         
         self.update_display()
     
@@ -246,17 +258,16 @@ class MainGUIWindow(QMainWindow):
         return length, -rating, -year, name.lower()
 
     def _on_reverse_button_click(self):
-        if self.reverse_button.text() == "▼":
-            self.reverse_button.setText("▲")
-        elif self.reverse_button.text() == "▲":
-            self.reverse_button.setText("▼")
+        self.reverse_button.setText(
+            "▲" if self.reverse_button.text() == "▼" else "▼"
+        )
         self.resort_media_list()
     
     def _on_refresh_button_click(self):
-        new_movie_folders = self.settings_menu.movie_folders
-        new_show_folders = self.settings_menu.show_folders
-
-        self.load_show_movie_lists(new_movie_folders, new_show_folders)
+        self.load_show_movie_lists(
+            self.settings_menu.movie_folders,
+            self.settings_menu.show_folders
+        )
 
     def lazy_load_visible_buttons(self):
         scroll_value = self.scroll_area.verticalScrollBar().value()
@@ -267,13 +278,13 @@ class MainGUIWindow(QMainWindow):
         visible_bottom = scroll_value + visible_rect.height()
 
         # Load images for buttons whose vertical position is within view
-        for btn in self.media_buttons:
+        for button in self.media_buttons:
             # Get button's Y position relative to scroll area content
-            btn_y = btn.mapTo(self.scroll_area.widget(), QPoint(0, 0)).y()
+            btn_y = button.mapTo(self.scroll_area.widget(), QPoint(0, 0)).y()
             if visible_top - 200 < btn_y < visible_bottom + 200:  # preload a bit outside view
-                btn.load_image()
+                button.load_image()
             else:
-                btn.unload_image()
+                button.unload_image()
     
     def closeEvent(self, event, *args, **kwargs):
         # Save the new folder paths from the settings to the .env file
@@ -290,7 +301,7 @@ class MainGUIWindow(QMainWindow):
         dotenv.set_key(dotenv.find_dotenv(), "MEDIA_PLAYER", current_media_player)
         dotenv.set_key(dotenv.find_dotenv(), "SPEED",  current_speed)
 
-        clean_cache(self.movie_list, self.show_list)
+        clean_cache(self.media_lists)
 
         super().closeEvent(event)
     

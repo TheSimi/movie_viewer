@@ -3,17 +3,6 @@ import shutil
 import stat
 
 from const import CACHE_DIR, CACHE_VERSION
-from media_classes import Movie, Show
-
-def cache_path(path: str) -> str:
-    basename = os.path.basename(path)
-    # sum the values of the characters in the path
-    char_sum = 0
-    for i in path:
-        char_sum += ord(i)
-    basename = basename + '_' + str(char_sum)
-    return os.path.join(CACHE_DIR, basename)
-
 
 def clear_all_cache():
     for filename in os.listdir(CACHE_DIR):
@@ -28,11 +17,11 @@ def clear_all_cache():
                 print(f'Failed to delete {file_path}. Reason: {e}')
 
 
-def clean_cache(movie_list: list[Movie], show_list: list[Show]):
-    movie_path_list = [movie.cache_path(movie.path) for movie in movie_list]
-    show_path_list = [show.cache_path(show.path) for show in show_list]
-
-    full_path_list = movie_path_list + show_path_list
+def clean_cache(media_list: dict[type, list]):
+    full_path_list = []
+    for media_items in media_list.values():
+        for media in media_items:
+            full_path_list.append(media.cache_path(media.path))
 
     for basename in os.listdir(CACHE_DIR):
         full_path = os.path.join(CACHE_DIR, basename)

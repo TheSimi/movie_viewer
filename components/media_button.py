@@ -2,6 +2,7 @@ from PyQt6.QtWidgets import QVBoxLayout, QLabel, QMenu, QMessageBox, QMainWindow
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QPixmap
 from PIL.ImageQt import ImageQt
+from functools import cached_property
 
 from media_classes import Media, Show, Movie
 from components.details_window import MediaDetailsDialog
@@ -66,16 +67,21 @@ class MediaButton(PushButton):
 
     def _show_context_menu(self, pos):
         context_menu = QMenu(self)
-        play =  context_menu.addAction("Play")
+        
+        play = context_menu.addAction("Play")
         play.triggered.connect(self._open_play_window)
+        
         details = context_menu.addAction("Details")
         details.triggered.connect(self._open_details)
+        
         open_in_explorer = context_menu.addAction("Open in files")
         open_in_explorer.triggered.connect(self.media.open_in_explorer)
-        delete_cache_and_reload = context_menu.addAction("Reload")
-        delete_cache_and_reload.triggered.connect(self._del_cache_and_reload)
+        
+        reload = context_menu.addAction("Reload")
+        reload.triggered.connect(self._del_cache_and_reload)
+        
         if isinstance(self.media, Show):
-            rm_wached = context_menu.addAction("Delete wached")
+            rm_wached = context_menu.addAction("Delete watched")
             rm_wached.triggered.connect(self._remove_watched_folder)
         elif isinstance(self.media, Movie):
             rm_movie = context_menu.addAction("Delete movie")
@@ -95,7 +101,7 @@ class MediaButton(PushButton):
         self.media.delete_cache()
         self.main_window._on_refresh_button_click() # type: ignore
 
-    @property
+    @cached_property
     def main_window(self) -> QMainWindow:
         """
         Returns the main window of the application.
@@ -118,15 +124,13 @@ class MediaButton(PushButton):
         return confirmation == QMessageBox.StandardButton.Yes
 
     def _remove_watched_folder(self):
-        if not self._get_confirmation() or not isinstance(self.media, Show):
+        if not isinstance(self.media, Show) or not self._get_confirmation():
             return
-        # assuming self.media is a Show type
         self.media.remove_watched_folder()
     
     def _remove_movie(self):
-        if not self._get_confirmation() or not isinstance(self.media, Movie):
+        if not isinstance(self.media, Movie) or not self._get_confirmation():
             return
-        # assuming self.media is a Movie type
         self.media.remove_movie()
         self.main_window._on_refresh_button_click() # type: ignore
 

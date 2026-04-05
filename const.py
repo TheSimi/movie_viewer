@@ -1,5 +1,6 @@
-import dotenv
 import os
+
+import dotenv
 from PIL import Image, ImageDraw, ImageFont
 
 dotenv.load_dotenv(override=True)

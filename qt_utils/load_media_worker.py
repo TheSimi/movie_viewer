@@ -2,6 +2,7 @@ from PyQt6.QtCore import QObject, pyqtSignal
 
 from media_classes import Media
 
+
 class LoadMediaWorker(QObject):
     """
     A worker class to load media files from a list of folders

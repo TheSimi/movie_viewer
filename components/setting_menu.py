@@ -1,14 +1,24 @@
 import os
 import subprocess
-from PyQt6.QtWidgets import (
-    QDialog, QVBoxLayout, QHBoxLayout, QLabel, QDoubleSpinBox,
-    QFileDialog, QWidget, QScrollArea, QComboBox, QLineEdit, QSizePolicy,
-)
-from PyQt6.QtCore import Qt
 
-from const import MOVIE_FOLDERS, SHOW_FOLDERS, CACHE_DIR, MEDIA_PLAYER, PLAY_SPEED
-from utils.utils import copy_text
+from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import (
+    QComboBox,
+    QDialog,
+    QDoubleSpinBox,
+    QFileDialog,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QScrollArea,
+    QSizePolicy,
+    QVBoxLayout,
+    QWidget,
+)
+
+from const import CACHE_DIR, MEDIA_PLAYER, MOVIE_FOLDERS, PLAY_SPEED, SHOW_FOLDERS
 from qt_utils.push_button import PushButton
+from utils.utils import copy_text
 
 
 class SettingsMenu(QDialog):

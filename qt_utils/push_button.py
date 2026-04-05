@@ -1,6 +1,6 @@
 from PyQt6.QtWidgets import QPushButton
 
-from const import IDLE_BUTTON_STYLESHEET, FOCUSED_BUTTON_STYLESHEET
+from const import FOCUSED_BUTTON_STYLESHEET, IDLE_BUTTON_STYLESHEET
 
 ENLARGE_AMOUNT = 1.05
 
@@ -13,8 +13,8 @@ class PushButton(QPushButton):
         
         self.setStyleSheet(new_idle_style)
         
-        self.enterEvent = lambda arg: self.setStyleSheet(new_hover_style) # type: ignore
-        self.leaveEvent = lambda arg: self.setStyleSheet(new_idle_style) # type: ignore
-        self.focusInEvent = lambda arg: self.setStyleSheet(new_hover_style) # type: ignore
-        self.focusOutEvent = lambda arg: self.setStyleSheet(new_idle_style) # type: ignore
+        self.enterEvent = lambda arg: self.setStyleSheet(new_hover_style) # type: ignore  # noqa: ARG005
+        self.leaveEvent = lambda arg: self.setStyleSheet(new_idle_style) # type: ignore # noqa: ARG005
+        self.focusInEvent = lambda arg: self.setStyleSheet(new_hover_style) # type: ignore # noqa: ARG005
+        self.focusOutEvent = lambda arg: self.setStyleSheet(new_idle_style) # type: ignore # noqa: ARG005
     

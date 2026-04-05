@@ -1,6 +1,6 @@
-import re
-import os
 import json
+import os
+import re
 import shutil
 import subprocess
 
@@ -8,6 +8,7 @@ from const import MEDIA_PLAYER
 from media_classes.media import Media
 from services.logger import logger
 from services.show_client import ShowClient
+
 
 class Show(Media):
     _KEYS = ['name', 'plot', 'rating', 'year', 'episodes', 'seasons', 'image']

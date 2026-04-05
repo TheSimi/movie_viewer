@@ -1,6 +1,6 @@
 pip install uv
 
-uv sync
+uv sync --no-dev
 
 Write-Output "It is recommended that you manually delete the dist and build folders now"
 Remove-Item main.build

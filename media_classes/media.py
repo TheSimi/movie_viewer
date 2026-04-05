@@ -2,12 +2,13 @@ import abc
 import json
 import os
 import shutil
-from typing import Type
+
 from PIL import Image
 
 from const import CACHE_DIR, MEDIA_PLAYER, UNKNOWN_POSTER
 from services.api_client import ApiClient
 from services.logger import logger
+
 
 class Media(abc.ABC):
     _KEYS: list[str]
@@ -28,7 +29,7 @@ class Media(abc.ABC):
     def __init__(
         self,
         path: str,
-        client_class: Type[ApiClient] = ApiClient,
+        client_class: type[ApiClient] = ApiClient,
         **kwargs
     ):
         # fetch the data
@@ -85,7 +86,7 @@ class Media(abc.ABC):
         """
         image_path = os.path.join(path, "image.png")
         json_path = os.path.join(path, "metadata.json")
-        with open(json_path, 'r') as f:
+        with open(json_path) as f:
             data = json.load(f)
         image = Image.open(image_path)
         return cls(image=image, **data)

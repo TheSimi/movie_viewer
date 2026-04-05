@@ -1,13 +1,14 @@
+import json
 import os
 import re
-import json
 import shutil
 import subprocess
 
 from const import MEDIA_PLAYER, SUBTITLE_EXTENTIONS, VIDEO_EXTENTIONS
 from media_classes.media import Media
-from services.movie_client import MovieClient
 from services.logger import logger
+from services.movie_client import MovieClient
+
 
 class Movie(Media):
     _KEYS = ['is_file', 'name', 'plot', 'rating', 'runtime', 'year', 'image']

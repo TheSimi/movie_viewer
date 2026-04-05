@@ -1,7 +1,7 @@
-from PyQt6.QtWidgets import QDialog, QVBoxLayout, QLabel, QWidget, QScrollArea
+from PyQt6.QtWidgets import QDialog, QLabel, QScrollArea, QVBoxLayout, QWidget
 
-from qt_utils.push_button import PushButton
 from media_classes import Media, Movie, Show
+from qt_utils.push_button import PushButton
 
 LABEL_STYLE = "font-size: 14px; margin-bottom: 10px;"
 

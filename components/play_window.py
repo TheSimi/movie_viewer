@@ -1,10 +1,9 @@
-from PyQt6.QtWidgets import (
-    QDialog, QVBoxLayout, QHBoxLayout, QDoubleSpinBox, QLabel
-)
+from PyQt6.QtWidgets import QDialog, QDoubleSpinBox, QHBoxLayout, QLabel, QVBoxLayout
 
 from const import MEDIA_PLAYER
 from media_classes import Media
 from qt_utils.push_button import PushButton
+
 
 class PlayWindow(QDialog):
     def __init__(self, media: Media, default_speed: float = 1, media_player: str = MEDIA_PLAYER, parent=None):

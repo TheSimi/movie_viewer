@@ -1,5 +1,5 @@
 import io
-from typing import Optional
+
 from PIL import Image
 
 from const import UNKNOWN_POSTER
@@ -21,7 +21,7 @@ class MovieClient(ApiClient):
             return ImdbdevClient.search_media(title)
 
     @classmethod
-    def get_media(cls, id: str, title: Optional[str] = None, **kwargs):
+    def get_media(cls, id: str, title: str | None = None, **kwargs):
         """
         Fetch media data by ID.
         
@@ -32,7 +32,7 @@ class MovieClient(ApiClient):
         """
         try:
             logger.debug(f"Getting movie with id: {id}")
-            data = cls.get(f"search", params={"tt": id}).json()['short']
+            data = cls.get("search", params={"tt": id}).json()['short']
             if title:
                 media_title = cls.get_media_name(title)
                 if media_title:
@@ -50,7 +50,7 @@ class MovieClient(ApiClient):
                 return {}
     
     @classmethod
-    def get_media_name(cls, title: str) -> Optional[str]:
+    def get_media_name(cls, title: str) -> str | None:
         """
         Fetch the name of a media item by its title.
         
@@ -83,7 +83,7 @@ class MovieClient(ApiClient):
             return {}
 
     @classmethod
-    def get_poster(cls, id: str, title: Optional[str] = None, **kwargs):
+    def get_poster(cls, id: str, title: str | None = None, **kwargs):  # noqa: ARG003
         """
         Fetch the poster for a movie by its ID.
         

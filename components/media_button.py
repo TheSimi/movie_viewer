@@ -1,14 +1,16 @@
-from PyQt6.QtWidgets import QVBoxLayout, QLabel, QMenu, QMessageBox, QMainWindow
-from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QPixmap
-from PIL.ImageQt import ImageQt
 from functools import cached_property
 
-from media_classes import Media, Show, Movie
+from PIL.ImageQt import ImageQt
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QPixmap
+from PyQt6.QtWidgets import QLabel, QMainWindow, QMenu, QMessageBox, QVBoxLayout
+
 from components.details_window import MediaDetailsDialog
 from components.play_window import PlayWindow
-from const import MEDIA_PLAYER, TEXT_LABEL_STYLESHEET, IMAGE_LABEL_STYLESHEET
+from const import IMAGE_LABEL_STYLESHEET, MEDIA_PLAYER, TEXT_LABEL_STYLESHEET
+from media_classes import Media, Movie, Show
 from qt_utils.push_button import PushButton
+
 
 class MediaButton(PushButton):
     def __init__(

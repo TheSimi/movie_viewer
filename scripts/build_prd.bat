@@ -1,6 +1,6 @@
 pip install uv
 
-uv sync
+uv sync --no-dev
 
 echo "It is recommended that you manually delete the dist and build folders now"
 @RMDIR /S main.build

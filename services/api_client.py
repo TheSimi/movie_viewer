@@ -1,7 +1,8 @@
 import abc
-from requests import Session, Response
-from requests.exceptions import HTTPError
+
 from PIL import Image
+from requests import Response, Session
+from requests.exceptions import HTTPError
 
 from const import RETRY_AMOUNT
 from services.logger import logger
@@ -17,7 +18,7 @@ class ApiClient:
         super().__init_subclass__(**kwargs)
         
         # Ensure the subclass isn't just another abstract class
-        if not abc.abstractmethod in cls.__dict__.values():
+        if abc.abstractmethod not in cls.__dict__.values():
             if not hasattr(cls, "BASE_URL"):
                 raise TypeError(f"Class {cls.__name__} must define 'BASE_URL'")
     

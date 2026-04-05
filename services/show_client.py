@@ -1,5 +1,6 @@
 import io
-from typing import Any, Optional
+from typing import Any
+
 from PIL import Image
 
 from const import UNKNOWN_POSTER
@@ -7,11 +8,12 @@ from services.api_client import ApiClient
 from services.imdbdev_client import ImdbdevClient
 from services.logger import logger
 
+
 class ShowClient(ApiClient):
     BASE_URL = "https://api.tvmaze.com"
     
     @classmethod
-    def search_media(cls, title: str) -> tuple[Optional[str], Optional[str]]:
+    def search_media(cls, title: str) -> tuple[str | None, str | None]:
         tvmaze_id = None
         imdb_id = None
         
@@ -35,7 +37,7 @@ class ShowClient(ApiClient):
         return tvmaze_id, imdb_id
 
     @classmethod
-    def get_media(cls, id: tuple[Optional[str], Optional[str]], **kwargs) -> dict[str, Any]:
+    def get_media(cls, id: tuple[str | None, str | None], **kwargs) -> dict[str, Any]:
         tvmaze_id, imdb_id = id
         tvmaze_data = None
         imdb_data = None
@@ -61,7 +63,7 @@ class ShowClient(ApiClient):
         
 
     @classmethod
-    def get_poster(cls, id: tuple[Optional[str], Optional[str]], **kwargs):
+    def get_poster(cls, id: tuple[str | None, str | None], **kwargs):  # noqa: ARG003
         tvmaze_id, imdb_id = id
         
         if tvmaze_id:

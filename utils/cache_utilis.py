@@ -4,6 +4,7 @@ import stat
 
 from const import CACHE_DIR, CACHE_VERSION
 
+
 def clear_all_cache():
     for filename in os.listdir(CACHE_DIR):
             file_path = os.path.join(CACHE_DIR, filename)
@@ -43,7 +44,7 @@ def check_cache() -> bool:
     version_file = os.path.join(CACHE_DIR, "version.txt")
     if not os.path.exists(version_file):
         return False
-    with open(version_file, 'r') as f:
+    with open(version_file) as f:
         version = f.read().strip()
     return version == CACHE_VERSION
 

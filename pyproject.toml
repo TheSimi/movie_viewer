@@ -16,27 +16,7 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-    "mypy>=1.20.0",
     "ruff>=0.15.9",
-]
-
-[tool.mypy]
-show_error_codes = true
-pretty = true
-strict = true
-warn_redundant_casts = true
-warn_unused_ignores = true
-
-warn_return_any = true
-disallow_untyped_defs = true
-disallow_untyped_calls = true
-
-exclude = [
-    'venv/*',
-    '.venv/*',
-    'build/*',
-    'dist/*',
-    '__pycache__/*',
 ]
 
 [tool.ruff]

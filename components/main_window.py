@@ -256,7 +256,7 @@ class MainGUIWindow(QMainWindow):
                 media_list.sort(key=self._sort_by_length, reverse=reverse_sorting)
 
         self.update_display()
-    
+
     def replace_media(self, old_media: Media, new_media: Media):
         media_list = self.media_lists[old_media.__class__]
         try:
@@ -264,7 +264,9 @@ class MainGUIWindow(QMainWindow):
             media_list[idx] = new_media
             self.resort_media_list()
         except ValueError:
-            logger.warning(f"Old media {old_media.name} not found in list, appending new media.")
+            logger.warning(
+                f"Old media {old_media.name} not found in list, appending new media."
+            )
             media_list.append(new_media)
 
     @staticmethod

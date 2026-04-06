@@ -35,13 +35,12 @@ class SearchWindow(QDialog):
 
         scroll_area.setWidget(scroll_content_widget)
         main_layout.addWidget(scroll_area)
-        
+
         close_button = QPushButton("Close")
         close_button.clicked.connect(self.accept)
         main_layout.addWidget(close_button)
 
         self.setLayout(main_layout)
-        
 
     def populate_search_results(self):
         search_results = self.client.get_search_results(self.media.name)
@@ -53,7 +52,7 @@ class SearchWindow(QDialog):
         self.media.delete_cache()
         media_class = Movie if isinstance(self.media, Movie) else Show
         new_media = media_class(self.media.path, id=imdb_id)
-        self.parent().replace_media(self.media, new_media) # type: ignore
+        self.parent().replace_media(self.media, new_media)  # type: ignore
         self.accept()
 
 

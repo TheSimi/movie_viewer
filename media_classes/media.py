@@ -16,25 +16,20 @@ class Media(abc.ABC):
     year: int
     rating: float
     plot: str
-    
+
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
-        
+
         # Ensure the subclass isn't just another abstract class
         if abc.abstractmethod not in cls.__dict__.values():
             if not hasattr(cls, "_KEYS"):
                 raise TypeError(f"Class {cls.__name__} must define '_KEYS'")
-    
+
     @abc.abstractmethod
-    def __init__(
-        self,
-        path: str,
-        client_class: type[ApiClient] = ApiClient,
-        **kwargs
-    ):
+    def __init__(self, path: str, client_class: type[ApiClient] = ApiClient, **kwargs):
         self.id = kwargs.pop("id", None)
         self.path = path
-        
+
         if kwargs:
             self.init_kwargs(**kwargs)
             return
@@ -45,23 +40,25 @@ class Media(abc.ABC):
             self.data = client_class.get_media(self.id, title=filename)
             self.image = client_class.get_poster(self.id, title=filename)
         except Exception as e:
-            logger.warning(f"Failed to fetch for {filename}: {e.__class__.__name__} | {e}")
+            logger.warning(
+                f"Failed to fetch for {filename}: {e.__class__.__name__} | {e}"
+            )
             self.data = {}
             self.image = UNKNOWN_POSTER
-    
+
     def init_kwargs(self, **kwargs):
         # ensure all required arguments are present
         for key in self._KEYS:
             if key not in kwargs.keys():
                 raise ValueError(f"Missing required argument '{key}'")
-        
+
         # set the arguments to the given kwargs
         for key, value in kwargs.items():
             if key in self._KEYS:
                 setattr(self, key, value)
-            elif not key == 'metacritic': # TODO - remove metacritic
+            elif not key == "metacritic":  # TODO - remove metacritic
                 raise ValueError(f"Invalid argument '{key}'")
-    
+
     @staticmethod
     def cache_path(path: str):
         basename = os.path.basename(path)
@@ -69,12 +66,12 @@ class Media(abc.ABC):
         char_sum = 0
         for i in path:
             char_sum += ord(i)
-        basename = basename + '_' + str(char_sum)
+        basename = basename + "_" + str(char_sum)
         return os.path.join(CACHE_DIR, basename)
-    
+
     @staticmethod
     def is_vlc(media_player: str):
-        return os.path.basename(media_player).lower() in ['vlc', 'vlc.exe']
+        return os.path.basename(media_player).lower() in ["vlc", "vlc.exe"]
 
     @classmethod
     def from_cache(cls, path: str):
@@ -92,7 +89,7 @@ class Media(abc.ABC):
             data = json.load(f)
         image = Image.open(image_path)
         return cls(image=image, **data)
-    
+
     @abc.abstractmethod
     def save_to_cache(self):
         """
@@ -103,20 +100,20 @@ class Media(abc.ABC):
         os.makedirs(cache_path, exist_ok=True)
         image_path = os.path.join(cache_path, "image.png")
         self.image.save(image_path)
-    
+
     @abc.abstractmethod
     def _get_values(self) -> tuple:
         """
         Returns a tuple with the values of the media. Needs to be implemented on every subclass
         Default implementation returns year, rating, name and path fo the media
-        
+
         :return: A tuple with the values of the media
         :rtype: tuple[int, float, str, str]
         """
-        year: int = getattr(self, 'year', 0)
-        rating: float = getattr(self, 'rating', 0.1)
-        name: str = getattr(self, 'name', "placeholder")
-        path: str = getattr(self, 'path', "placeholder")
+        year: int = getattr(self, "year", 0)
+        rating: float = getattr(self, "rating", 0.1)
+        name: str = getattr(self, "name", "placeholder")
+        path: str = getattr(self, "path", "placeholder")
         return year, rating, name, path
 
     @classmethod
@@ -134,7 +131,7 @@ class Media(abc.ABC):
         if not os.path.isdir(dir_path):
             raise ValueError(f"{dir_path} is not a directory")
         return []
-    
+
     @abc.abstractmethod
     def play(self, media_player: str = MEDIA_PLAYER, speed: float = 1):
         """
@@ -147,7 +144,7 @@ class Media(abc.ABC):
         :type speed: float, optional
         """
         pass
-    
+
     @abc.abstractmethod
     def open_in_explorer(self):
         """
@@ -155,7 +152,7 @@ class Media(abc.ABC):
         Needs to be implemented on every subclass, default implementation does nothing.
         """
         pass
-    
+
     def delete_cache(self):
         cache_path = self.cache_path(self.path)
         if os.path.exists(cache_path):

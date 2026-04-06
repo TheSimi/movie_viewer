@@ -113,7 +113,9 @@ class MediaButton(PushButton):
 
     def _del_cache_and_reload(self):
         self.media.delete_cache()
-        self.main_window._on_refresh_button_click()  # type: ignore
+        media_class = Movie if isinstance(self.media, Movie) else Show
+        new_media = media_class(self.media.path, id=self.media.id)
+        self.main_window.replace_media(self.media, new_media)  # type: ignore
 
     @cached_property
     def main_window(self) -> QMainWindow:

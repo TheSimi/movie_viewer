@@ -32,14 +32,16 @@ class Media(abc.ABC):
         client_class: type[ApiClient] = ApiClient,
         **kwargs
     ):
-        # fetch the data
+        self.id = kwargs.pop("id", None)
         self.path = path
+        
         if kwargs:
             self.init_kwargs(**kwargs)
             return
         filename = os.path.splitext(os.path.basename(self.path))[0]
         try:
-            self.id = client_class.search_media(filename)
+            if self.id is None:
+                self.id = client_class.search_media(filename)
             self.data = client_class.get_media(self.id, title=filename)
             self.image = client_class.get_poster(self.id, title=filename)
         except Exception as e:

@@ -173,7 +173,6 @@ version = "0.3.0"
 source = { virtual = "." }
 dependencies = [
     { name = "colorlog" },
-    { name = "nuitka" },
     { name = "pillow" },
     { name = "pyqt6" },
     { name = "python-dotenv" },
@@ -192,7 +191,6 @@ pyinstaller = [
 [package.metadata]
 requires-dist = [
     { name = "colorlog", specifier = ">=6.10.1" },
-    { name = "nuitka", specifier = ">=4.0.2" },
     { name = "pillow", specifier = ">=11.2.1" },
     { name = "pyqt6", specifier = ">=6.9.0" },
     { name = "python-dotenv", specifier = ">=1.1.0" },
@@ -203,12 +201,6 @@ requires-dist = [
 [package.metadata.requires-dev]
 dev = [{ name = "ruff", specifier = ">=0.15.9" }]
 pyinstaller = [{ name = "pyinstaller", specifier = ">=6.19.0" }]
-
-[[package]]
-name = "nuitka"
-version = "4.0.2"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/4c/b6/3f66e08f0b84a0b64582de37b0658965657a2ebfa2df91c66429dabfbdd0/nuitka-4.0.2.tar.gz", hash = "sha256:86f6e8c4caeb2fd727620a971c0628b2cfee908a9ba78f4d733a4192b54eb9ba", size = 4419359, upload-time = "2026-03-03T14:04:53.059Z" }
 
 [[package]]
 name = "packaging"

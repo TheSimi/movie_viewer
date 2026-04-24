@@ -1,11 +1,10 @@
 pip install uv
 
-uv sync --no-dev
+uv sync --no-dev --group pyinstaller
 
 Write-Output "It is recommended that you manually delete the dist and build folders now"
-Remove-Item main.build
-Remove-Item main.dist
-uv run nuitka --mode=standalone --windows-icon-from-ico=assets\icon.ico --enable-plugin=pyqt6 --product-name="movie_viewer" --product-version=0.3.0 --file-description="Watch downloaded movies and shows easly" --zig main.py
+Remove-Item build
+Remove-Item dist
+uv run pyinstaller --onedir -n "movie_viewer" --icon="assets\icon.ico" main.py
 
-Copy-Item .env main.dist\.env
-Rename-Item main.dist\main.exe movie_viewer.exe
+Copy-Item config.json dist\movie_viewer\config.json

@@ -1,25 +1,33 @@
+import json
 import os
 
-import dotenv
 from PIL import Image, ImageDraw, ImageFont
 
-dotenv.load_dotenv(override=True)
+CONFIG_PATH = os.path.join(os.path.dirname(__file__), "config.json")
+
+DEFAULT_CONFIG = {
+    "movie_folders": [],
+    "show_folders": [],
+    "media_player": r"C:\Program Files (x86)\VideoLAN\VLC\vlc.exe",
+    "speed": 1.0,
+}
+
+if os.path.exists(CONFIG_PATH):
+    with open(CONFIG_PATH) as f:
+        CONFIG = json.load(f)
+else:
+    CONFIG = DEFAULT_CONFIG
 
 RETRY_AMOUNT = 5
 
-MOVIE_FOLDERS = (
-    os.getenv("MOVIE_FOLDERS").split(",") if os.getenv("MOVIE_FOLDERS") else []
-)
-SHOW_FOLDERS = os.getenv("SHOW_FOLDERS").split(",") if os.getenv("SHOW_FOLDERS") else []
-try:
-    PLAY_SPEED = float(os.getenv("SPEED")) if os.getenv("SPEED") else 1.0  # type: ignore
-except ValueError:
-    PLAY_SPEED = 1.0
+MOVIE_FOLDERS = CONFIG.get("movie_folders", [])
+SHOW_FOLDERS = CONFIG.get("show_folders", [])
+PLAY_SPEED = CONFIG.get("speed", 1.0)
 
 CACHE_DIR = os.path.join(os.getenv("LOCALAPPDATA"), "movie_viewer", ".cache")  # type: ignore
 CACHE_VERSION = "0.2.2"
 
-MEDIA_PLAYER = os.getenv("MEDIA_PLAYER") if os.getenv("MEDIA_PLAYER") else "vlc"
+MEDIA_PLAYER = CONFIG.get("media_player", "vlc")
 if MEDIA_PLAYER.lower() == "vlc":
     MEDIA_PLAYER = r"C:\Program Files (x86)\VideoLAN\VLC\vlc.exe"
 elif MEDIA_PLAYER.lower() == "wmplayer":

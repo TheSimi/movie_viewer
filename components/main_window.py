@@ -1,4 +1,5 @@
-import dotenv
+import json
+
 from PyQt6.QtCore import QPoint, Qt, QThread, QTimer
 from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import (
@@ -15,7 +16,7 @@ from PyQt6.QtWidgets import (
 
 from components.media_button import MediaButton
 from components.setting_menu import SettingsMenu
-from const import MEDIA_PLAYER
+from const import CONFIG_PATH, MEDIA_PLAYER
 from media_classes import Media, Movie, Show
 from qt_utils.load_media_worker import LoadMediaWorker
 from qt_utils.push_button import PushButton
@@ -323,19 +324,14 @@ class MainGUIWindow(QMainWindow):
                 button.unload_image()
 
     def closeEvent(self, event, *args, **kwargs):  # noqa: ARG002
-        # Save the new folder paths from the settings to the .env file
-        new_movie_folders = self.settings_menu.movie_folders
-        new_show_folders = self.settings_menu.show_folders
-        current_speed = str(round(self.settings_menu.speed_spin.value(), 1))
-
-        current_media_player = self.settings_menu.media_player_edit.text()
-
-        new_movie_folder_const = ",".join(new_movie_folders)
-        new_show_folder_const = ",".join(new_show_folders)
-        dotenv.set_key(dotenv.find_dotenv(), "MOVIE_FOLDERS", new_movie_folder_const)
-        dotenv.set_key(dotenv.find_dotenv(), "SHOW_FOLDERS", new_show_folder_const)
-        dotenv.set_key(dotenv.find_dotenv(), "MEDIA_PLAYER", current_media_player)
-        dotenv.set_key(dotenv.find_dotenv(), "SPEED", current_speed)
+        new_config = {
+            "movie_folders": self.settings_menu.movie_folders,
+            "show_folders": self.settings_menu.show_folders,
+            "media_player": self.settings_menu.media_player_edit.text(),
+            "speed": round(self.settings_menu.speed_spin.value(), 1),
+        }
+        with open(CONFIG_PATH, "w") as f:
+            json.dump(new_config, f, indent=4)
 
         clean_cache(self.media_lists)
 

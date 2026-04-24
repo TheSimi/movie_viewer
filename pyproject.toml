@@ -18,6 +18,9 @@ dependencies = [
 dev = [
     "ruff>=0.15.9",
 ]
+pyinstaller = [
+    "pyinstaller>=6.19.0",
+]
 
 [tool.ruff]
 line-length = 88

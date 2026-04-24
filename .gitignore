@@ -12,3 +12,4 @@ dist/
 main.*
 
 TODO.md
+config.json

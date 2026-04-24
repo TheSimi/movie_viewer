@@ -122,12 +122,41 @@ The program is made using these tools:
 * **pyinstaller** - to make the program into an easy to use `.exe` file
 * **pillow** - for image loading and editing
 * **requests** - to fetch info about media from the web
+* **ruff** - for linting
 
 The program also uses some free-to use open APIs that don't require keys, these are:
 * **FM-DB API** - default api for movie info. [website](https://imdb.iamidiotareyoutoo.com) [documentation](https://imdb.iamidiotareyoutoo.com/docs/index.html)
 * **FM-DB API** - default api for movie info. [website](https://imdb.iamidiotareyoutoo.com) [documentation](https://imdb.iamidiotareyoutoo.com/docs/index.html)
 * **TV Maze** - default api for show info (except for rating). [website](https://www.tvmaze.com) [documentation](https://www.tvmaze.com/api)
 * **Imdb Dev** - default for show rating and fallback for everything else. [documentation](https://imdbapi.dev)
+
+### Running localy
+
+Make sure you have uv installed:
+
+```
+pip install uv
+```
+
+Clone the repository, then download dependecies and run:
+
+```
+uv sync
+
+uv run main.py
+```
+
+### Building localy
+
+Simply clone the repository, open it on `cmd` and run either one of those (or replace `.bat` with `.ps1` to run in powershell):
+```
+scripts/build_dev.bat
+```
+```
+scripts/build_prd.bat
+```
+
+The dev script is just a little different, and builds a `.exe` where you can see the console and logs for yourself.
 
 ## Future additions
 

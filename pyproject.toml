@@ -5,15 +5,53 @@ description = "Watch downloaded movies and shows easly"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
-    "cinemagoer>=2023.5.1",
+    "colorlog>=6.10.1",
     "pillow>=11.2.1",
-    "pyinstaller>=6.13.0",
     "pyqt6>=6.9.0",
     "python-dotenv>=1.1.0",
     "qt-material>=2.17",
     "requests>=2.32.3",
-    "tqdm>=4.67.1",
 ]
 
-[tool.uv.sources]
-cinemagoer = { git = "https://github.com/cinemagoer/cinemagoer" }
+[dependency-groups]
+dev = [
+    "ruff>=0.15.9",
+]
+pyinstaller = [
+    "pyinstaller>=6.19.0",
+]
+
+[tool.ruff]
+line-length = 88
+
+[tool.ruff.lint]
+select = [
+    "E", 
+    "F", 
+    "I", 
+    "B", 
+    "C4",
+    "UP", 
+    "ARG", 
+]
+ignore = [
+    "E501",
+    "B008",
+]
+fixable = ["ALL"]
+unfixable = []
+
+[tool.ruff.lint.isort]
+known-first-party = ["movie_viewer"]
+section-order = [
+    "future",
+    "standard-library",
+    "third-party",
+    "first-party",
+    "local-folder"
+]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"

@@ -1,5 +1,0 @@
-pyqt6
-python-dotenv
-cinemagoer
-requests
-pillow

@@ -1,5 +1,6 @@
 .env
 .cache/
+.vscode/
 
 __pycache__/
 
@@ -8,5 +9,7 @@ venv/
 build/
 dist/
 *.spec
+main.*
 
-roadmap.txt
+TODO.md
+config.json

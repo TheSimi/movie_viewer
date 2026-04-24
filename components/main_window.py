@@ -1,62 +1,61 @@
-import dotenv
-import os
-import tqdm
-from PyQt6.QtWidgets import (
-    QMainWindow, QWidget, QVBoxLayout, QScrollArea, QLabel, QStackedLayout,
-    QComboBox, QGridLayout, QPushButton, QHBoxLayout, QProgressBar
-)
+import json
+
+from PyQt6.QtCore import QPoint, Qt, QThread, QTimer
 from PyQt6.QtGui import QFont
-from PyQt6.QtCore import Qt, QPoint, QTimer
+from PyQt6.QtWidgets import (
+    QComboBox,
+    QGridLayout,
+    QHBoxLayout,
+    QLabel,
+    QMainWindow,
+    QScrollArea,
+    QStackedLayout,
+    QVBoxLayout,
+    QWidget,
+)
 
 from components.media_button import MediaButton
-from utils.get_lists import get_file_list, get_movies_in_folder, get_shows_in_folder
 from components.setting_menu import SettingsMenu
-from utils.media import Movie, Show, Media
-from utils.cache_utilis import cache_path, clear_cache
-from const import MEDIA_PLAYER
+from const import CONFIG_PATH, MEDIA_PLAYER
+from media_classes import Media, Movie, Show
+from qt_utils.load_media_worker import LoadMediaWorker
+from qt_utils.push_button import PushButton
+from services.logger import logger
+from utils.cache_utilis import clean_cache
 
 SCROLL_AREA_WIDTH = 900
 COMBO_BOX_WIDTH = 310
 
+
 class MainGUIWindow(QMainWindow):
     def __init__(self, movie_folders, show_folders):
         super().__init__()
+        self._init_ui()
+
+        self.settings_menu = SettingsMenu(self, movie_folders, show_folders)
+
+        self._init_media(movie_folders, show_folders)
+        self.media_player = MEDIA_PLAYER
+
+    def _init_ui(self):
         self.setWindowTitle("movie_viewer")
         self.setGeometry(0, 0, 1000, 780)
 
-        # ─── CENTRAL WIDGET ───
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)
 
         self.stack = QStackedLayout(self.central_widget)
 
-        self._init_main_screen()
-
-        self.settings_window = SettingsMenu(self, movie_folders, show_folders)
-
-        self.media_buttons = []
-        self.init_show_movie_lists(movie_folders, show_folders)
-        self.media_player = MEDIA_PLAYER
-
-    def _init_main_screen(self):
         self.main_screen = QWidget()
         main_layout = QVBoxLayout(self.main_screen)
         main_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         main_layout.setContentsMargins(20, 20, 20, 20)
         main_layout.setSpacing(20)
 
-        self.progress_bar = QProgressBar()
-        self.progress_bar.setFixedHeight(10)
-        self.progress_bar.setTextVisible(False)
-        self.progress_bar.setMaximum(100)
-        self.progress_bar.setValue(0)
-        self.progress_bar.hide()  # hidden by default
-        main_layout.addWidget(self.progress_bar)
-
         # Settings button row
         settings_bar = QHBoxLayout()
         settings_bar.addStretch()
-        settings_btn = QPushButton("⚙️")
+        settings_btn = PushButton("⚙️")
         settings_btn.setObjectName("SettingsButton")  # used in clear/restore
         settings_btn.setFixedSize(50, 50)
         settings_btn.setFont(QFont("Ariel", 14))
@@ -74,7 +73,9 @@ class MainGUIWindow(QMainWindow):
         self.list_type_combo.setFixedWidth(COMBO_BOX_WIDTH)
         self.list_type_combo.setFont(QFont("Arial", 14))
         self.list_type_combo.setStyleSheet("padding: 6px;")
-        self.list_type_combo.currentIndexChanged.connect(lambda: {self.update_display(), self.resort_media_list()})
+        self.list_type_combo.currentIndexChanged.connect(
+            lambda: {self.update_display(), self.resort_media_list()}
+        )
 
         self.sort_combo = QComboBox()
         self.sort_combo.addItems(["Name", "Year", "Rating", "Path", "Length"])
@@ -87,18 +88,16 @@ class MainGUIWindow(QMainWindow):
         self.sort_label.setText("Sort by:")
         self.sort_label.setFont(QFont("Arial", 14))
 
-        self.reverse_button = QPushButton()
+        self.reverse_button = PushButton(style_sheet="padding: 6px;")
         self.reverse_button.setText("▼")
         self.reverse_button.setFont(QFont("Arial", 14))
         self.reverse_button.setFixedWidth(50)
-        self.reverse_button.setStyleSheet("padding: 6px;")
         self.reverse_button.clicked.connect(self._on_reverse_button_click)
-        
-        self.refresh_button = QPushButton()
+
+        self.refresh_button = PushButton(style_sheet="padding: 6px;")
         self.refresh_button.setText("⭮")
         self.refresh_button.setFont(QFont("Arial", 14))
         self.refresh_button.setFixedWidth(50)
-        self.refresh_button.setStyleSheet("padding: 6px;")
         self.refresh_button.clicked.connect(self._on_refresh_button_click)
 
         top_controls_layout.addWidget(self.refresh_button)
@@ -115,8 +114,12 @@ class MainGUIWindow(QMainWindow):
         self.scroll_area = QScrollArea()
         self.scroll_area.setFixedWidth(SCROLL_AREA_WIDTH)
         self.scroll_area.setWidgetResizable(True)
-        self.scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        self.scroll_area.verticalScrollBar().valueChanged.connect(self.lazy_load_visible_buttons)
+        self.scroll_area.setHorizontalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAlwaysOff
+        )
+        self.scroll_area.verticalScrollBar().valueChanged.connect(
+            self.lazy_load_visible_buttons
+        )
 
         scroll_wrapper.addWidget(self.scroll_area)
         main_layout.addLayout(scroll_wrapper)
@@ -131,53 +134,85 @@ class MainGUIWindow(QMainWindow):
         self.stack.addWidget(self.main_screen)
         self.stack.setCurrentWidget(self.main_screen)
 
-    def init_show_movie_lists(self, movie_folders, show_folders):
-        self.movie_list = self._get_media_list(movie_folders, get_movies_in_folder, Movie)
-        self.show_list = self._get_media_list(show_folders, get_shows_in_folder, Show)
-    
-    def _get_media_list(
+    def _init_media(self, movie_folders, show_folders):
+        self.media_buttons = []
+        self.media_lists: dict[type, list[Media]] = {Movie: [], Show: []}
+        self.loading_threads: dict[type, QThread] = {}
+        self.loading_workers: dict[type, LoadMediaWorker] = {}
+
+        self.load_show_movie_lists(movie_folders, show_folders)
+
+    def load_show_movie_lists(self, movie_folders, show_folders):
+        """
+        Load the movie and show lists, each in a separate thread
+        """
+        self._get_media_list_async(movie_folders, Movie)
+        self._get_media_list_async(show_folders, Show)
+
+    def _get_media_list_async(
         self,
         folder_list: list,
-        file_in_folder_func: callable,
-        file_class: Media,
-    ) -> list:
-        file_path_list = get_file_list(folder_list, file_in_folder_func)
-
-        self.progress_bar.show()
-        self.progress_bar.setValue(0)
-        self.progress_bar.setMaximum(len(file_path_list))
-
-        media_list = self.load_file_list(file_path_list, file_class)
-
-        self.progress_bar.hide()
-        return media_list
-    
-    def load_file_list(
-        self,
-        file_path_list: list,
         file_class: Media.__class__,
-    ) -> list: 
-        file_list = []
-        for file in tqdm.tqdm(file_path_list, desc=f"Loading {file_class.__name__} objects"):
-            if os.path.exists(cache_path(file)):
-                file_list.append(file_class.load_from_cache(cache_path(file)))
-            else:
-                instance = file_class(file)
-                file_list.append(instance)
-                instance.save_to_cache()
-            
-            self.progress_bar.setValue(self.progress_bar.value() + 1)
-        return file_list
+    ):
+        # Check if we are in the process of loading
+        if self.loading_threads.get(file_class, None) or self.loading_workers.get(
+            file_class, None
+        ):
+            logger.warning(
+                f"Already loading {file_class.__name__} list, skipping new load request."
+            )
+            return
+
+        # Init worker and thread
+        self.loading_threads[file_class] = QThread()
+        self.loading_workers[file_class] = LoadMediaWorker(folder_list, file_class)
+        self.loading_workers[file_class].moveToThread(self.loading_threads[file_class])
+
+        # Connect signals for start and end
+        self.loading_threads[file_class].started.connect(
+            self.loading_workers[file_class].run
+        )
+        self.loading_workers[file_class].finished.connect(
+            lambda media_list: self._on_media_loaded(media_list, file_class)
+        )
+
+        # Clean up thread and worker after finishing
+        self.loading_threads[file_class].finished.connect(
+            self.loading_threads[file_class].deleteLater
+        )
+        self.loading_threads[file_class].finished.connect(
+            lambda: self.loading_threads.pop(file_class, None)
+        )
+
+        # Start loading in the background
+        self.loading_threads[file_class].start()
+
+    def _on_media_loaded(self, media_list, file_class):
+        # Update media list
+        self.media_lists[file_class] = media_list
+
+        # Clean up workers
+        self.loading_workers[file_class].deleteLater()
+        self.loading_workers.pop(file_class, None)
+
+        # Close thread
+        self.loading_threads[file_class].quit()
+        self.loading_threads[file_class].wait()
+
+        # Update display
+        self.resort_media_list()
 
     def open_settings_menu(self):
-        self.settings_window.exec()
+        """
+        Open the settings menu, and update the settings when done
+        """
+        self.settings_menu.exec()
 
-        new_movie_folders = self.settings_window.movie_folders
-        new_show_folders = self.settings_window.show_folders
-        self.media_player = self.settings_window.media_player_edit.text()
+        self.media_player = self.settings_menu.media_player_edit.text()
 
-        self.init_show_movie_lists(new_movie_folders, new_show_folders)
-        self.resort_media_list()
+        self.load_show_movie_lists(
+            self.settings_menu.movie_folders, self.settings_menu.show_folders
+        )
 
     def update_display(self):
         while self.grid_layout.count():
@@ -185,8 +220,10 @@ class MainGUIWindow(QMainWindow):
             if item.widget():
                 item.widget().deleteLater()
 
-        current_list = self.show_list if self.list_type_combo.currentText() == "Shows" else self.movie_list
-        current_speed = self.settings_window.speed_spin.value()
+        current_list = self.media_lists[
+            Show if self.list_type_combo.currentText() == "Shows" else Movie
+        ]
+        current_speed = self.settings_menu.speed_spin.value()
 
         self.media_buttons = []
         for idx, media in enumerate(current_list):
@@ -195,69 +232,77 @@ class MainGUIWindow(QMainWindow):
             row = idx // 4
             col = idx % 4
             self.grid_layout.addWidget(button, row, col)
-        
+
         QTimer.singleShot(50, self.lazy_load_visible_buttons)
-    
+
     def resort_media_list(self):
         sort_option = self.sort_combo.currentText()
         current_type = self.list_type_combo.currentText()
-        reverse_sorting = True if self.reverse_button.text() == "▲" else False
+        reverse_sorting = self.reverse_button.text() == "▲"
 
         # Get the correct list to sort
-        media_list = self.show_list if current_type == "Shows" else self.movie_list
+        media_list = self.media_lists[Show if current_type == "Shows" else Movie]
 
         # Sorting logic
-        if sort_option == "Name":
-            media_list.sort(key=self._sort_by_name, reverse=reverse_sorting)
-        elif sort_option == "Year":
-            media_list.sort(key=self._sort_by_year, reverse=reverse_sorting)
-        elif sort_option == "Rating":
-            media_list.sort(key=self._sort_by_rating, reverse=reverse_sorting)
-        elif sort_option == "Path":
-            media_list.sort(key=self._sort_by_path, reverse=reverse_sorting)
-        elif sort_option == "Length":
-            media_list.sort(key=self._sort_by_length, reverse=reverse_sorting)
-        
+        match sort_option:
+            case "Name":
+                media_list.sort(key=self._sort_by_name, reverse=reverse_sorting)
+            case "Year":
+                media_list.sort(key=self._sort_by_year, reverse=reverse_sorting)
+            case "Rating":
+                media_list.sort(key=self._sort_by_rating, reverse=reverse_sorting)
+            case "Path":
+                media_list.sort(key=self._sort_by_path, reverse=reverse_sorting)
+            case "Length":
+                media_list.sort(key=self._sort_by_length, reverse=reverse_sorting)
+
         self.update_display()
-    
+
+    def replace_media(self, old_media: Media, new_media: Media):
+        media_list = self.media_lists[old_media.__class__]
+        try:
+            idx = media_list.index(old_media)
+            media_list[idx] = new_media
+            self.resort_media_list()
+        except ValueError:
+            logger.warning(
+                f"Old media {old_media.name} not found in list, appending new media."
+            )
+            media_list.append(new_media)
+
     @staticmethod
     def _sort_by_name(media: Media):
         year, rating, name, _, _ = media._get_values()
         return name.lower(), -rating, -year
-    
+
     @staticmethod
     def _sort_by_year(media: Media):
         year, rating, name, _, _ = media._get_values()
         return -year, -rating, name.lower()
-    
+
     @staticmethod
     def _sort_by_rating(media: Media):
         year, rating, name, _, _ = media._get_values()
         return -rating, -year, name.lower()
-    
+
     @staticmethod
     def _sort_by_path(media: Media):
         _, _, _, path, _ = media._get_values()
         return path
-    
+
     @staticmethod
     def _sort_by_length(media: Media):
         year, rating, name, _, length = media._get_values()
         return length, -rating, -year, name.lower()
 
     def _on_reverse_button_click(self):
-        if self.reverse_button.text() == "▼":
-            self.reverse_button.setText("▲")
-        elif self.reverse_button.text() == "▲":
-            self.reverse_button.setText("▼")
+        self.reverse_button.setText("▲" if self.reverse_button.text() == "▼" else "▼")
         self.resort_media_list()
-    
-    def _on_refresh_button_click(self):
-        new_movie_folders = self.settings_window.movie_folders
-        new_show_folders = self.settings_window.show_folders
 
-        self.init_show_movie_lists(new_movie_folders, new_show_folders)
-        self.resort_media_list()
+    def _on_refresh_button_click(self):
+        self.load_show_movie_lists(
+            self.settings_menu.movie_folders, self.settings_menu.show_folders
+        )
 
     def lazy_load_visible_buttons(self):
         scroll_value = self.scroll_area.verticalScrollBar().value()
@@ -268,34 +313,30 @@ class MainGUIWindow(QMainWindow):
         visible_bottom = scroll_value + visible_rect.height()
 
         # Load images for buttons whose vertical position is within view
-        for btn in self.media_buttons:
+        for button in self.media_buttons:
             # Get button's Y position relative to scroll area content
-            btn_y = btn.mapTo(self.scroll_area.widget(), QPoint(0, 0)).y()
-            if visible_top - 200 < btn_y < visible_bottom + 200:  # preload a bit outside view
-                btn.load_image()
+            btn_y = button.mapTo(self.scroll_area.widget(), QPoint(0, 0)).y()
+            if (
+                visible_top - 200 < btn_y < visible_bottom + 200
+            ):  # preload a bit outside view
+                button.load_image()
             else:
-                btn.unload_image()
-    
-    def closeEvent(self, event):
-        # Save the new folder paths from the settings to the .env file
-        new_movie_folders = self.settings_window.movie_folders
-        new_show_folders = self.settings_window.show_folders
-        current_speed = str(round(self.settings_window.speed_spin.value(), 1))
+                button.unload_image()
 
-        current_media_player = self.settings_window.media_player_edit.text()
-        
-        new_movie_folder_const = ",".join(new_movie_folders)
-        new_show_folder_const = ",".join(new_show_folders)
-        dotenv.set_key(dotenv.find_dotenv(), "MOVIE_FOLDERS", new_movie_folder_const)
-        dotenv.set_key(dotenv.find_dotenv(), "SHOW_FOLDERS", new_show_folder_const)
-        dotenv.set_key(dotenv.find_dotenv(), "MEDIA_PLAYER", current_media_player)
-        dotenv.set_key(dotenv.find_dotenv(), "SPEED",  current_speed)
+    def closeEvent(self, event, *args, **kwargs):  # noqa: ARG002
+        new_config = {
+            "movie_folders": self.settings_menu.movie_folders,
+            "show_folders": self.settings_menu.show_folders,
+            "media_player": self.settings_menu.media_player_edit.text(),
+            "speed": round(self.settings_menu.speed_spin.value(), 1),
+        }
+        with open(CONFIG_PATH, "w") as f:
+            json.dump(new_config, f, indent=4)
 
-        clear_cache(self.movie_list, self.show_list, )
+        clean_cache(self.media_lists)
 
         super().closeEvent(event)
-    
-    def show(self):
-        super().show()
 
+    def showMaximized(self):
+        super().showMaximized()
         self.update_display()

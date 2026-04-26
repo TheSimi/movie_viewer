@@ -5,10 +5,18 @@ from PIL import Image, ImageDraw, ImageFont
 
 CONFIG_PATH = os.path.join(os.path.dirname(__file__), "config.json")
 
+DEFAULT_VLC_PATH = next(
+    (path for path in [
+        r"C:\Program Files\VideoLAN\VLC\vlc.exe",
+        r"C:\Program Files (x86)\VideoLAN\VLC\vlc.exe",
+    ] if os.path.exists(path)),
+    None
+)
+
 DEFAULT_CONFIG = {
     "movie_folders": [],
     "show_folders": [],
-    "media_player": r"C:\Program Files (x86)\VideoLAN\VLC\vlc.exe",
+    "media_player": DEFAULT_VLC_PATH,
     "speed": 1.0,
 }
 
@@ -29,9 +37,7 @@ CACHE_VERSION = "0.2.2"
 
 MEDIA_PLAYER = CONFIG.get("media_player", "vlc")
 if MEDIA_PLAYER.lower() == "vlc":
-    MEDIA_PLAYER = r"C:\Program Files (x86)\VideoLAN\VLC\vlc.exe"
-elif MEDIA_PLAYER.lower() == "wmplayer":
-    MEDIA_PLAYER = r"C:\Program Files (x86)\Windows Media Player\wmplayer.exe"
+    MEDIA_PLAYER = DEFAULT_VLC_PATH if DEFAULT_VLC_PATH else MEDIA_PLAYER
 
 VIDEO_EXTENTIONS = (
     ".avi",

@@ -16,8 +16,16 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from const import CACHE_DIR, MEDIA_PLAYER, MOVIE_FOLDERS, PLAY_SPEED, SHOW_FOLDERS
+from const import (
+    CACHE_DIR,
+    DEFAULT_VLC_PATH,
+    MEDIA_PLAYER,
+    MOVIE_FOLDERS,
+    PLAY_SPEED,
+    SHOW_FOLDERS,
+)
 from qt_utils.push_button import PushButton
+from services.logger import logger
 from utils.utils import copy_text
 
 
@@ -31,7 +39,7 @@ class SettingsMenu(QDialog):
     ):
         super().__init__(parent)
         self.setWindowTitle("Settings")
-        self.setFixedSize(500, 500)
+        self.setFixedSize(650, 650)
 
         self.movie_folders = movie_folders or []
         self.show_folders = show_folders or []
@@ -70,6 +78,11 @@ class SettingsMenu(QDialog):
         copy_button.setFixedWidth(80)
         copy_button.clicked.connect(lambda: copy_text(self.media_player_edit.text()))
         buttons_layout.addWidget(copy_button)
+        
+        use_default_player = PushButton("Default")
+        use_default_player.setFixedWidth(100)
+        use_default_player.clicked.connect(self._use_default_player)
+        buttons_layout.addWidget(use_default_player)
 
         player_row.addWidget(player_label)
         player_row.addWidget(self.media_player_edit)
@@ -108,14 +121,14 @@ class SettingsMenu(QDialog):
         self.type_selector = QComboBox()
         self.type_selector.addItems(["Movies", "Shows"])
         self.type_selector.currentIndexChanged.connect(self.switch_type)
-        self.type_selector.setFixedWidth(420)
+        self.type_selector.setFixedWidth(500)
         outer_layout.addWidget(
             self.type_selector, alignment=Qt.AlignmentFlag.AlignHCenter
         )
 
         # Scroll area for folder list
         self.scroll_area = QScrollArea()
-        self.scroll_area.setFixedWidth(420)
+        self.scroll_area.setFixedWidth(500)
         self.scroll_area.setWidgetResizable(True)
         outer_layout.addWidget(
             self.scroll_area, alignment=Qt.AlignmentFlag.AlignHCenter
@@ -155,6 +168,14 @@ class SettingsMenu(QDialog):
             self.media_player_edit.setText(os.path.normpath(path))
             self.media_player_edit.setCursorPosition(len(path))
             self._update_speed_row()
+
+    def _use_default_player(self):
+        if not DEFAULT_VLC_PATH:
+            logger.warning("Could not find default VLC")
+            return
+        self.media_player_edit.setText(DEFAULT_VLC_PATH)
+        self.media_player_edit.setCursorPosition(len(DEFAULT_VLC_PATH))
+        self._update_speed_row()
 
     @staticmethod
     def open_cache_folder():

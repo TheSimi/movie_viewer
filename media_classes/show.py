@@ -136,9 +136,9 @@ class Show(Media):
                 )
             else:
                 logger.warning(
-                    f"Playing episode {current_episode} of show {self.name} with {media_player} at speed {speed} without speed control, because the media player is not VLC"
+                    f"Playing episode {current_episode} of show {self.name} with windows default player without speed control, because the given media player is not VLC"
                 )
-                subprocess.Popen(f'"{media_player}" "{current_episode}"')
+                os.startfile(current_episode)
         else:
             logger.warning(
                 f"No episodes found for show {self.name} in path {self.path}, opening folder instead"

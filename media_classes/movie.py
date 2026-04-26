@@ -129,9 +129,9 @@ class Movie(Media):
                 )
             else:
                 logger.warning(
-                    f"Playing movie file {self.path} with {media_player} at speed {speed} without speed control, because the media player is not VLC"
+                    f"Playing movie file {self.path} with windows default player without speed control, because the given media player is not VLC"
                 )
-                subprocess.Popen(f'"{media_player}" "{self.path}"')
+                os.startfile(self.path)
         else:
             files_list = os.listdir(self.path)
             if self.is_vlc(media_player):

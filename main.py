@@ -11,7 +11,6 @@ from utils.cache_utilis import cache_version_handler
 
 
 def main():
-    # setup config.json file and cache folder
     if not os.path.exists(CONFIG_PATH):
         logger.debug(
             f"Could not find config.json at {CONFIG_PATH}. Creating a new one with default values."
@@ -20,7 +19,6 @@ def main():
             json.dump(DEFAULT_CONFIG, f, indent=4)
     cache_version_handler()
 
-    # start the application
     app = QApplication([])
     qm.apply_stylesheet(app, theme="dark_purple.xml")
 

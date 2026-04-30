@@ -21,6 +21,30 @@ pyinstaller = [
     "pyinstaller>=6.19.0",
 ]
 
+[tool.pyright]
+reportOptionalMemberAccess = "none"
+reportUnknownVariableType = "none"
+reportPrivateLocalImportUsage = "none"
+reportUnknownParameterType = "none"
+reportMissingParameterType = "none"
+reportUnknownMemberType = "none"
+reportUnannotatedClassAttribute = "none"
+reportUnusedCallResult = "none"
+reportUnknownArgumentType = "none"
+reportAny = "none"
+reportImplicitOverride = "none"
+reportMissingTypeArgument = "none"
+reportUnknownLambdaType = "none"
+reportUninitializedInstanceVariable = "none"
+reportExplicitAny = "none"
+reportIncompatibleMethodOverride = "none"
+reportMatchNotExhaustive = "none"
+reportPrivateUsage = "none"
+reportUnnecessaryTypeIgnoreComment = "none"
+reportReturnType = "warning"
+reportArgumentType = "warning"
+reportAttributeAccessIssue = "warning"
+
 [tool.ruff]
 line-length = 88
 

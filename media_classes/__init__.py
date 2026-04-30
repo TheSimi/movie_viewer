@@ -1,3 +1,3 @@
-from .media import Media  # type: ignore # noqa: F401
-from .movie import Movie  # type: ignore # noqa: F401
-from .show import Show  # type: ignore # noqa: F401
+from .media import Media  # noqa: F401  # pyright: ignore[reportUnusedImport]
+from .movie import Movie  # noqa: F401 # pyright: ignore[reportUnusedImport]
+from .show import Show  # noqa: F401 # pyright: ignore[reportUnusedImport]

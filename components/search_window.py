@@ -52,7 +52,7 @@ class SearchWindow(QDialog):
         self.media.delete_cache()
         media_class = Movie if isinstance(self.media, Movie) else Show
         new_media = media_class(self.media.path, id=imdb_id)
-        self.parent().replace_media(self.media, new_media)  # type: ignore
+        self.parent().replace_media(self.media, new_media)  # pyright: ignore[reportAttributeAccessIssue]
         self.accept()
 
 

@@ -224,7 +224,7 @@ class Movie(Media):
                 file = self.path
             subprocess.Popen(f'explorer /select,"{file}"')
 
-    def remove_movie(self):
+    def remove_media(self):
         if self.is_file:
             os.remove(self.path)
         else:

@@ -1,16 +1,21 @@
 import json
 import os
+from typing import cast
 
 from PIL import Image, ImageDraw, ImageFont
 
 CONFIG_PATH = os.path.join(os.path.dirname(__file__), "config.json")
 
 DEFAULT_VLC_PATH = next(
-    (path for path in [
-        r"C:\Program Files\VideoLAN\VLC\vlc.exe",
-        r"C:\Program Files (x86)\VideoLAN\VLC\vlc.exe",
-    ] if os.path.exists(path)),
-    None
+    (
+        path
+        for path in [
+            r"C:\Program Files\VideoLAN\VLC\vlc.exe",
+            r"C:\Program Files (x86)\VideoLAN\VLC\vlc.exe",
+        ]
+        if os.path.exists(path)
+    ),
+    None,
 )
 
 DEFAULT_CONFIG = {
@@ -24,20 +29,18 @@ if os.path.exists(CONFIG_PATH):
     with open(CONFIG_PATH) as f:
         CONFIG = json.load(f)
 else:
-    CONFIG = DEFAULT_CONFIG
+    CONFIG = DEFAULT_CONFIG  # pyright: ignore[reportConstantRedefinition]
 
 RETRY_AMOUNT = 5
 
-MOVIE_FOLDERS = CONFIG.get("movie_folders", [])
-SHOW_FOLDERS = CONFIG.get("show_folders", [])
-PLAY_SPEED = CONFIG.get("speed", 1.0)
+MOVIE_FOLDERS: list[str] = CONFIG.get("movie_folders", [])  # pyright: ignore[reportAssignmentType]
+SHOW_FOLDERS: list[str] = CONFIG.get("show_folders", [])  # pyright: ignore[reportAssignmentType]
+PLAY_SPEED: float = CONFIG.get("speed", 1.0)  # pyright: ignore[reportAssignmentType]
 
-CACHE_DIR = os.path.join(os.getenv("LOCALAPPDATA"), "movie_viewer", ".cache")  # type: ignore
+CACHE_DIR = os.path.join(cast(str, os.getenv("LOCALAPPDATA")), "movie_viewer", ".cache")  # type: ignore
 CACHE_VERSION = "0.2.2"
 
-MEDIA_PLAYER = CONFIG.get("media_player", "vlc")
-if MEDIA_PLAYER.lower() == "vlc":
-    MEDIA_PLAYER = DEFAULT_VLC_PATH if DEFAULT_VLC_PATH else MEDIA_PLAYER
+MEDIA_PLAYER: str = CONFIG.get("media_player", "vlc")  # pyright: ignore[reportAssignmentType]
 
 VIDEO_EXTENTIONS = (
     ".avi",

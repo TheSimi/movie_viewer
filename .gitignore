@@ -1,6 +1,7 @@
 .env
 .cache/
 .vscode/
+.ruff_cache/
 
 __pycache__/
 
@@ -9,7 +10,6 @@ venv/
 build/
 dist/
 *.spec
-main.*
 
 TODO.md
 config.json

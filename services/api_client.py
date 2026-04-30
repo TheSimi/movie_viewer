@@ -1,4 +1,5 @@
 import abc
+from typing import Any
 
 from PIL import Image
 from requests import Response, Session
@@ -8,9 +9,7 @@ from const import RETRY_AMOUNT
 from services.logger import logger
 
 
-class ApiClient:
-    __metaclass__ = abc.ABCMeta
-
+class ApiClient(abc.ABC):
     BASE_URL: str
     session = Session()
 
@@ -58,7 +57,7 @@ class ApiClient:
 
     @classmethod
     @abc.abstractmethod
-    def get_media(cls, id: str, **kwargs) -> dict[str, any]:
+    def get_media(cls, id: str, **kwargs) -> dict[str, Any]:
         """
         Get a media by it's imdb id
 
@@ -84,7 +83,7 @@ class ApiClient:
 
     @classmethod
     @abc.abstractmethod
-    def get_search_results(cls, title: str) -> list[dict[str, any]]:
+    def get_search_results(cls, title: str) -> list[dict[str, Any]]:
         """
         Get search results for a media title
 

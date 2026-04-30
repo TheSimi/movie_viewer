@@ -1,4 +1,5 @@
 import io
+from typing import Any
 
 from PIL import Image
 
@@ -144,7 +145,7 @@ class MovieClient(ApiClient):
         return image.convert("RGB")
 
     @classmethod
-    def get_search_results(cls, title: str) -> list[dict[str, any]]:
+    def get_search_results(cls, title: str) -> list[dict[str, Any]]:
         try:
             logger.debug(f"[FM-DB] Getting search results for title: {title}")
             response = cls.get("search", params={"q": title}).json()["description"]

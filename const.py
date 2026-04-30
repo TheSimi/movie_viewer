@@ -33,9 +33,9 @@ else:
 
 RETRY_AMOUNT = 5
 
-MOVIE_FOLDERS = CONFIG.get("movie_folders", [])
-SHOW_FOLDERS = CONFIG.get("show_folders", [])
-PLAY_SPEED = CONFIG.get("speed", 1.0)
+MOVIE_FOLDERS: list[str] = CONFIG.get("movie_folders", [])  # pyright: ignore[reportAssignmentType]
+SHOW_FOLDERS: list[str] = CONFIG.get("show_folders", [])  # pyright: ignore[reportAssignmentType]
+PLAY_SPEED: float = CONFIG.get("speed", 1.0)  # pyright: ignore[reportAssignmentType]
 
 CACHE_DIR = os.path.join(cast(str, os.getenv("LOCALAPPDATA")), "movie_viewer", ".cache")  # type: ignore
 CACHE_VERSION = "0.2.2"

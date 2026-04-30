@@ -14,7 +14,7 @@ class PushButton(QPushButton):
 
         self.setStyleSheet(new_idle_style)
 
-        self.enterEvent = lambda arg: self.setStyleSheet(new_hover_style)  # type: ignore  # noqa: ARG005
-        self.leaveEvent = lambda arg: self.setStyleSheet(new_idle_style)  # type: ignore # noqa: ARG005
-        self.focusInEvent = lambda arg: self.setStyleSheet(new_hover_style)  # type: ignore # noqa: ARG005
-        self.focusOutEvent = lambda arg: self.setStyleSheet(new_idle_style)  # type: ignore # noqa: ARG005
+        self.enterEvent = lambda arg: self.setStyleSheet(new_hover_style)  # noqa: ARG005  # pyright: ignore[reportAttributeAccessIssue]
+        self.leaveEvent = lambda arg: self.setStyleSheet(new_idle_style)  # noqa: ARG005 # pyright: ignore[reportAttributeAccessIssue]
+        self.focusInEvent = lambda arg: self.setStyleSheet(new_hover_style) # noqa: ARG005 # pyright: ignore[reportAttributeAccessIssue]
+        self.focusOutEvent = lambda arg: self.setStyleSheet(new_idle_style) # noqa: ARG005 # pyright: ignore[reportAttributeAccessIssue]

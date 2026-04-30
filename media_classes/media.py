@@ -153,6 +153,13 @@ class Media(abc.ABC):
         """
         pass
 
+    @abc.abstractmethod
+    def remove_media(self):
+        """
+        Remove all the media files
+        """
+        pass
+
     def delete_cache(self):
         cache_path = self.cache_path(self.path)
         if os.path.exists(cache_path):

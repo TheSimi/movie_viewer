@@ -91,11 +91,14 @@ class MediaButton(PushButton):
         search.triggered.connect(self._open_search)
 
         if isinstance(self.media, Show):
+            rm_show = context_menu.addAction("Delete show")
+            rm_show.triggered.connect(self._remove_media)
+            
             rm_wached = context_menu.addAction("Delete watched")
             rm_wached.triggered.connect(self._remove_watched_folder)
         elif isinstance(self.media, Movie):
             rm_movie = context_menu.addAction("Delete movie")
-            rm_movie.triggered.connect(self._remove_movie)
+            rm_movie.triggered.connect(self._remove_media)
         if context_menu.actions():
             context_menu.exec(self.mapToGlobal(pos))
 
@@ -115,7 +118,7 @@ class MediaButton(PushButton):
         self.media.delete_cache()
         media_class = Movie if isinstance(self.media, Movie) else Show
         new_media = media_class(self.media.path, id=self.media.id)
-        self.main_window.replace_media(self.media, new_media)  # type: ignore
+        self.main_window.replace_media(self.media, new_media)  # pyright: ignore[reportAttributeAccessIssue]
 
     @cached_property
     def main_window(self) -> QMainWindow:
@@ -128,7 +131,7 @@ class MediaButton(PushButton):
         current_widget = self
         while not current_widget.__class__.__name__ == "MainGUIWindow":
             current_widget = current_widget.parent()
-        return current_widget  # type: ignore
+        return current_widget  # pyright: ignore[reportReturnType]
 
     def _get_confirmation(self) -> bool:
         confirmation = QMessageBox.question(
@@ -145,11 +148,11 @@ class MediaButton(PushButton):
             return
         self.media.remove_watched_folder()
 
-    def _remove_movie(self):
-        if not isinstance(self.media, Movie) or not self._get_confirmation():
+    def _remove_media(self):
+        if not self._get_confirmation():
             return
-        self.media.remove_movie()
-        self.main_window._on_refresh_button_click()  # type: ignore
+        self.media.remove_media()
+        self.main_window._on_refresh_button_click()  # pyright: ignore[reportAttributeAccessIssue]
 
     def load_image(self):
         if not self.image_loaded:

@@ -165,3 +165,6 @@ class Show(Media):
     def remove_watched_folder(self):
         if os.path.exists(os.path.join(self.path, "watched")):
             shutil.rmtree(os.path.join(self.path, "watched"))
+
+    def remove_media(self):
+        shutil.rmtree(self.path)

@@ -6,6 +6,7 @@ from PyQt6.QtGui import QPixmap
 from PyQt6.QtWidgets import QLabel, QMainWindow, QMenu, QMessageBox, QVBoxLayout
 
 from components.details_window import MediaDetailsDialog
+from components.episodes_window import EpisodesWindow
 from components.play_window import PlayWindow
 from components.search_window import SearchWindow
 from const import IMAGE_LABEL_STYLESHEET, MEDIA_PLAYER, TEXT_LABEL_STYLESHEET
@@ -91,6 +92,9 @@ class MediaButton(PushButton):
         search.triggered.connect(self._open_search)
 
         if isinstance(self.media, Show):
+            episodes = context_menu.addAction("Episodes")
+            episodes.triggered.connect(self._open_episodes_window)
+
             rm_show = context_menu.addAction("Delete show")
             rm_show.triggered.connect(self._remove_media)
             
@@ -113,6 +117,15 @@ class MediaButton(PushButton):
     def _open_play_window(self):
         play_win = PlayWindow(self.media, self.speed)
         play_win.exec()
+
+    def _open_episodes_window(self):
+        episodes_win = EpisodesWindow(
+            self.media,
+            media_player=self.media_player,
+            speed=self.speed,
+            parent=self.main_window,
+        )
+        episodes_win.show()
 
     def _del_cache_and_reload(self):
         self.media.delete_cache()

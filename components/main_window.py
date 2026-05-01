@@ -13,6 +13,8 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+from pyqtwaitingspinner import SpinnerParameters, WaitingSpinner
+from pyqtwaitingspinner.parameters import QColor
 
 from components.media_button import MediaButton
 from components.setting_menu import SettingsMenu
@@ -100,6 +102,26 @@ class MainGUIWindow(QMainWindow):
         self.refresh_button.setFixedWidth(50)
         self.refresh_button.clicked.connect(self._on_refresh_button_click)
 
+        loading_spinner_parameters = SpinnerParameters(
+            roundness=100.0,
+            trail_fade_percentage=75.0,
+            number_of_lines=100,
+            line_length=6,
+            line_width=6,
+            inner_radius=8,
+            revolutions_per_second=1.5,
+            color=QColor(200, 200, 200),
+            minimum_trail_opacity=0.0,
+            center_on_parent=False,
+            disable_parent_when_spinning=False,
+        )
+        self.loading_spinner = WaitingSpinner(
+            self, spinner_parameters=loading_spinner_parameters
+        )
+        self.loading_spinner.start()
+        self.loading_spinner.hide()
+
+        top_controls_layout.addWidget(self.loading_spinner)
         top_controls_layout.addWidget(self.refresh_button)
         top_controls_layout.addWidget(self.list_type_combo)
         top_controls_layout.addWidget(self.sort_label)
@@ -155,6 +177,8 @@ class MainGUIWindow(QMainWindow):
         file_class: Media.__class__,
     ):
         # Check if we are in the process of loading
+        self.loading_spinner.show()
+        
         if self.loading_threads.get(file_class, None) or self.loading_workers.get(
             file_class, None
         ):
@@ -201,6 +225,8 @@ class MainGUIWindow(QMainWindow):
 
         # Update display
         self.resort_media_list()
+        if not self.loading_workers:
+            self.loading_spinner.hide()
 
     def open_settings_menu(self):
         """

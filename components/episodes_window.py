@@ -52,12 +52,12 @@ class EpisodesWindow(QDialog):
         unwatched = self.media.episode_list
         watched = self.media.watched_episode_list
 
-        for episode_name in unwatched:
-            episode_widget = EpisodeRow(episode_name, is_watched=False, parent=self)
-            self.scroll_content_layout.addWidget(episode_widget)
+        all_episodes: list[tuple[str, bool]] = [(ep, False) for ep in unwatched]
+        all_episodes.extend([(ep, True) for ep in watched])
+        all_episodes.sort(key=lambda x: self.media._comapare_episodes(x[0]))
 
-        for episode_name in watched:
-            episode_widget = EpisodeRow(episode_name, is_watched=True, parent=self)
+        for episode_name, is_watched in all_episodes:
+            episode_widget = EpisodeRow(episode_name, is_watched, parent=self)
             self.scroll_content_layout.addWidget(episode_widget)
 
         self.scroll_content_layout.addStretch()
@@ -94,20 +94,14 @@ class EpisodeRow(QWidget):
         layout.setContentsMargins(5, 5, 5, 5)
         layout.setSpacing(10)
 
-        name_label = QLabel(
-            f"<b>{'watched' if is_watched else 'unwatched'}</b>: {episode_name}"
-        )
+        name_label = QLabel(episode_name)
 
         play_button = QPushButton("Play")
-        play_button.clicked.connect(
-            lambda: parent.play_episode(episode_name)
-        )
+        play_button.clicked.connect(lambda: parent.play_episode(episode_name))
 
         watched_checkbox = QCheckBox("Watched")
         watched_checkbox.setChecked(is_watched)
-        watched_checkbox.clicked.connect(
-            lambda: parent.toggle_watched(episode_name)
-        )
+        watched_checkbox.clicked.connect(lambda: parent.toggle_watched(episode_name))
 
         layout.addWidget(name_label)
         layout.addStretch()

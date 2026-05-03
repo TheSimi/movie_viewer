@@ -7,4 +7,4 @@ echo "It is recommended that you manually delete the dist and build folders now"
 @RMDIR /S dist
 uv run pyinstaller --onedir -n "movie_viewer" --icon="assets\icon.ico" main.py
 
-copy config.json dist\movie_viewer\config.json
+copy config.json dist\movie_viewer\_internal\config.json

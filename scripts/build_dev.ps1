@@ -7,4 +7,4 @@ Remove-Item build
 Remove-Item dist
 uv run pyinstaller --onedir -n "movie_viewer" --icon="assets\icon.ico" main.py
 
-Copy-Item config.json dist\movie_viewer\config.json
+Copy-Item config.json dist\movie_viewer\_internal\config.json

@@ -95,6 +95,66 @@ class Show(Media):
         episode_list.sort(key=self._comapare_episodes)
         return episode_list
 
+    @property
+    def watched_episode_list(self) -> list[str]:
+        watched_path = os.path.join(self.path, "watched")
+        if not os.path.exists(watched_path):
+            return []
+        episode_list = []
+        for f in os.listdir(watched_path):
+            full_path = os.path.join(watched_path, f)
+            if os.path.isfile(full_path):
+                episode_list.append(f)
+        episode_list.sort(key=self._comapare_episodes)
+        return episode_list
+
+    def play_episode(
+        self,
+        episode_name: str,
+        media_player: str = MEDIA_PLAYER,
+        speed: float = 1,
+        move_to_watched: bool = True,
+    ):
+        episode_path = os.path.join(self.path, episode_name)
+        if not os.path.exists(episode_path):
+            watched_path = os.path.join(self.path, "watched", episode_name)
+            if os.path.exists(watched_path):
+                episode_path = watched_path
+            else:
+                logger.warning(f"Episode {episode_name} not found in {self.path}")
+                return
+
+        if move_to_watched:
+            if not os.path.exists(os.path.join(self.path, "watched")):
+                os.makedirs(os.path.join(self.path, "watched"))
+            if os.path.dirname(episode_path) != os.path.join(self.path, "watched"):
+                shutil.move(episode_path, os.path.join(self.path, "watched", episode_name))
+                episode_path = os.path.join(self.path, "watched", episode_name)
+
+        logger.info(
+            f"Playing episode {episode_name} of show {self.name} with {media_player} at speed {speed}"
+        )
+        if self.is_vlc(media_player):
+            subprocess.Popen(
+                f'"{media_player}" "{episode_path}" --rate={speed} --play-and-exit'
+            )
+        else:
+            logger.warning(
+                f"Playing episode {episode_name} of show {self.name} with windows default player without speed control"
+            )
+            os.startfile(episode_path)
+
+    def toggle_watched(self, episode_name: str):
+        episode_in_main = os.path.join(self.path, episode_name)
+        episode_in_watched = os.path.join(self.path, "watched", episode_name)
+
+        if os.path.exists(episode_in_watched):
+            shutil.move(episode_in_watched, episode_in_main)
+        elif os.path.exists(episode_in_main):
+            if not os.path.exists(os.path.join(self.path, "watched")):
+                os.makedirs(os.path.join(self.path, "watched"))
+            shutil.move(episode_in_main, episode_in_watched)
+
     @staticmethod
     def _comapare_episodes(episode_name: str):
         episode_name = os.path.splitext(episode_name)[0]

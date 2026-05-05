@@ -1,13 +1,14 @@
 import json
 
-from PyQt6.QtCore import QPoint, Qt, QThread, QTimer
-from PyQt6.QtGui import QFont
+from PyQt6.QtCore import QPoint, QSize, Qt, QThread, QTimer
+from PyQt6.QtGui import QFont, QIcon
 from PyQt6.QtWidgets import (
     QComboBox,
     QGridLayout,
     QHBoxLayout,
     QLabel,
     QMainWindow,
+    QPushButton,
     QScrollArea,
     QStackedLayout,
     QVBoxLayout,
@@ -18,10 +19,13 @@ from pyqtwaitingspinner.parameters import QColor
 
 from components.media_button import MediaButton
 from components.setting_menu import SettingsMenu
-from const import CONFIG_PATH, MEDIA_PLAYER
+from const import (
+    CONFIG_PATH,
+    MEDIA_PLAYER,
+    SETTINGS_ICON_PATH,
+)
 from media_classes import Media, Movie, Show
 from qt_utils.load_media_worker import LoadMediaWorker
-from qt_utils.push_button import PushButton
 from services.logger import logger
 from utils.cache_utilis import clean_cache
 
@@ -49,6 +53,7 @@ class MainGUIWindow(QMainWindow):
         self.stack = QStackedLayout(self.central_widget)
 
         self.main_screen = QWidget()
+        self.main_screen.setObjectName("MainScreen")
         main_layout = QVBoxLayout(self.main_screen)
         main_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         main_layout.setContentsMargins(20, 20, 20, 20)
@@ -57,10 +62,11 @@ class MainGUIWindow(QMainWindow):
         # Settings button row
         settings_bar = QHBoxLayout()
         settings_bar.addStretch()
-        settings_btn = PushButton("⚙️")
-        settings_btn.setObjectName("SettingsButton")  # used in clear/restore
+        settings_btn = QPushButton()
+        settings_btn.setObjectName("SettingsButton")
+        settings_btn.setIcon(QIcon(SETTINGS_ICON_PATH))
+        settings_btn.setIconSize(QSize(28, 28))
         settings_btn.setFixedSize(50, 50)
-        settings_btn.setFont(QFont("Ariel", 14))
         settings_btn.clicked.connect(self.open_settings_menu)
         settings_bar.addWidget(settings_btn)
         main_layout.addLayout(settings_bar)
@@ -71,32 +77,35 @@ class MainGUIWindow(QMainWindow):
         top_controls_layout.setSpacing(20)
 
         self.list_type_combo = QComboBox()
+        self.list_type_combo.setObjectName("ListTypeCombo")
         self.list_type_combo.addItems(["Shows", "Movies"])
         self.list_type_combo.setFixedWidth(COMBO_BOX_WIDTH)
         self.list_type_combo.setFont(QFont("Arial", 14))
-        self.list_type_combo.setStyleSheet("padding: 6px;")
         self.list_type_combo.currentIndexChanged.connect(
             lambda: {self.update_display(), self.resort_media_list()}
         )
 
         self.sort_combo = QComboBox()
+        self.sort_combo.setObjectName("SortCombo")
         self.sort_combo.addItems(["Name", "Year", "Rating", "Path", "Length"])
         self.sort_combo.setFixedWidth(120)
         self.sort_combo.setFont(QFont("Arial", 14))
-        self.sort_combo.setStyleSheet("padding: 6px;")
         self.sort_combo.currentIndexChanged.connect(self.resort_media_list)
 
         self.sort_label = QLabel()
+        self.sort_label.setObjectName("SortLabel")
         self.sort_label.setText("Sort by:")
         self.sort_label.setFont(QFont("Arial", 14))
 
-        self.reverse_button = PushButton(style_sheet="padding: 6px;")
+        self.reverse_button = QPushButton()
+        self.reverse_button.setObjectName("ReverseButton")
         self.reverse_button.setText("▼")
         self.reverse_button.setFont(QFont("Arial", 14))
         self.reverse_button.setFixedWidth(50)
         self.reverse_button.clicked.connect(self._on_reverse_button_click)
 
-        self.refresh_button = PushButton(style_sheet="padding: 6px;")
+        self.refresh_button = QPushButton()
+        self.refresh_button.setObjectName("RefreshButton")
         self.refresh_button.setText("⭮")
         self.refresh_button.setFont(QFont("Arial", 14))
         self.refresh_button.setFixedWidth(50)
@@ -147,6 +156,7 @@ class MainGUIWindow(QMainWindow):
         main_layout.addLayout(scroll_wrapper)
 
         self.scroll_content = QWidget()
+        self.scroll_content.setObjectName("ScrollContent")
         self.grid_layout = QGridLayout(self.scroll_content)
         self.grid_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         self.grid_layout.setHorizontalSpacing(20)

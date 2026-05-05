@@ -10,6 +10,7 @@ from PyQt6.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QLineEdit,
+    QPushButton,
     QScrollArea,
     QSizePolicy,
     QVBoxLayout,
@@ -24,7 +25,6 @@ from const import (
     PLAY_SPEED,
     SHOW_FOLDERS,
 )
-from qt_utils.push_button import PushButton
 from services.logger import logger
 from utils.utils import copy_text
 
@@ -69,17 +69,17 @@ class SettingsMenu(QDialog):
         buttons_layout = QHBoxLayout()
         buttons_layout.setSpacing(5)
 
-        browse_button = PushButton("Browse")
+        browse_button = QPushButton("Browse")
         browse_button.setFixedWidth(100)
         browse_button.clicked.connect(self._browse_media_player)
         buttons_layout.addWidget(browse_button)
 
-        copy_button = PushButton("Copy")
+        copy_button = QPushButton("Copy")
         copy_button.setFixedWidth(80)
         copy_button.clicked.connect(lambda: copy_text(self.media_player_edit.text()))
         buttons_layout.addWidget(copy_button)
 
-        use_default_player = PushButton("Default")
+        use_default_player = QPushButton("Default")
         use_default_player.setFixedWidth(100)
         use_default_player.clicked.connect(self._use_default_player)
         buttons_layout.addWidget(use_default_player)
@@ -110,7 +110,7 @@ class SettingsMenu(QDialog):
         self._update_speed_row()
 
         # ─── Clear Cache Button ───
-        self.open_cache_button = PushButton("Open Cache")
+        self.open_cache_button = QPushButton("Open Cache")
         self.open_cache_button.setFixedWidth(150)
         self.open_cache_button.clicked.connect(self.open_cache_folder)
         outer_layout.addWidget(
@@ -140,13 +140,13 @@ class SettingsMenu(QDialog):
         self.scroll_area.setWidget(self.scroll_content)
 
         # Add folder button
-        self.add_button = PushButton("Add Folder")
+        self.add_button = QPushButton("Add Folder")
         self.add_button.setFixedWidth(200)
         self.add_button.clicked.connect(self.add_folder)
         outer_layout.addWidget(self.add_button, alignment=Qt.AlignmentFlag.AlignHCenter)
 
         # Confirm button
-        confirm_btn = PushButton("Confirm")
+        confirm_btn = QPushButton("Confirm")
         confirm_btn.setFixedWidth(200)
         confirm_btn.clicked.connect(self.accept)
         outer_layout.addWidget(confirm_btn, alignment=Qt.AlignmentFlag.AlignHCenter)
@@ -203,7 +203,7 @@ class SettingsMenu(QDialog):
         for folder in folders:
             row = QHBoxLayout()
             label = QLabel(folder)
-            remove_btn = PushButton("Remove")
+            remove_btn = QPushButton("Remove")
             remove_btn.setFixedWidth(100)
             remove_btn.clicked.connect(lambda _, f=folder: self.remove_folder(f))
             row.addWidget(label)

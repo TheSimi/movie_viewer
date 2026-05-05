@@ -68,7 +68,7 @@ class SearchResult(QWidget):
         separator = QLabel("|")
 
         imdb_label = QLabel(
-            f"<b>imdb</b>: <a href='{imdb_url}' style='color: #4a9eff;'>{id}</a>"
+            f"<b>imdb</b>: <a href='{imdb_url}'>{id}</a>"
         )
         imdb_label.setOpenExternalLinks(True)
 

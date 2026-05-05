@@ -1,11 +1,16 @@
 import json
 import os
 
-import qt_material as qm
 from PyQt6.QtWidgets import QApplication
 
 from components.main_window import MainGUIWindow
-from const import CONFIG_PATH, DEFAULT_CONFIG, MOVIE_FOLDERS, SHOW_FOLDERS
+from const import (
+    CONFIG_PATH,
+    DEFAULT_CONFIG,
+    MOVIE_FOLDERS,
+    SHOW_FOLDERS,
+    STYLESHEET_PATH,
+)
 from services.logger import logger
 from utils.cache_utilis import cache_version_handler
 
@@ -20,7 +25,9 @@ def main():
     cache_version_handler()
 
     app = QApplication([])
-    qm.apply_stylesheet(app, theme="dark_purple.xml")
+
+    with open(STYLESHEET_PATH) as f:
+        app.setStyleSheet(f.read())
 
     win = MainGUIWindow(movie_folders=MOVIE_FOLDERS, show_folders=SHOW_FOLDERS)
     win.showMaximized()

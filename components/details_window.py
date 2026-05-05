@@ -1,9 +1,13 @@
-from PyQt6.QtWidgets import QDialog, QLabel, QScrollArea, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import (
+    QDialog,
+    QLabel,
+    QPushButton,
+    QScrollArea,
+    QVBoxLayout,
+    QWidget,
+)
 
 from media_classes import Media, Movie, Show
-from qt_utils.push_button import PushButton
-
-LABEL_STYLE = "font-size: 14px; margin-bottom: 10px;"
 
 
 class MediaDetailsDialog(QDialog):
@@ -22,37 +26,36 @@ class MediaDetailsDialog(QDialog):
         scroll_content_layout = QVBoxLayout(scroll_content_widget)
 
         path_label = QLabel(f"<b>Path:</b> {media.path}")
-        path_label.setStyleSheet(LABEL_STYLE)
+        path_label.setObjectName("DetailLabel")
         scroll_content_layout.addWidget(path_label)
 
         name_label = QLabel(f"<b>Name:</b> {media.name}")
-        name_label.setStyleSheet(LABEL_STYLE)
+        name_label.setObjectName("DetailLabel")
         scroll_content_layout.addWidget(name_label)
 
         rating_label = QLabel(f"<b>Rating:</b> {media.rating}")
-        rating_label.setStyleSheet(LABEL_STYLE)
+        rating_label.setObjectName("DetailLabel")
         scroll_content_layout.addWidget(rating_label)
 
         if isinstance(media, Movie):
             runtime_label = QLabel(f"<b>Runtime:</b> {media.runtime}")
-            runtime_label.setStyleSheet(LABEL_STYLE)
+            runtime_label.setObjectName("DetailLabel")
             scroll_content_layout.addWidget(runtime_label)
         elif isinstance(media, Show):
             episodes_label = QLabel(f"<b>Episodes:</b> {media.episodes}")
-            episodes_label.setStyleSheet(LABEL_STYLE)
+            episodes_label.setObjectName("DetailLabel")
             scroll_content_layout.addWidget(episodes_label)
 
             seasons_label = QLabel(f"<b>Seasons:</b> {media.seasons}")
-            seasons_label.setStyleSheet(LABEL_STYLE)
+            seasons_label.setObjectName("DetailLabel")
             scroll_content_layout.addWidget(seasons_label)
 
         year_label = QLabel(f"<b>Year:</b> {media.year}")
-        year_label.setStyleSheet(LABEL_STYLE)
+        year_label.setObjectName("DetailLabel")
         scroll_content_layout.addWidget(year_label)
 
         plot_label = QLabel(f"<b>Plot:</b> {media.plot}")
         plot_label.setWordWrap(True)
-        plot_label.setStyleSheet("font-size: 12px;")
         scroll_content_layout.addWidget(plot_label)
 
         scroll_content_layout.addStretch()
@@ -61,7 +64,7 @@ class MediaDetailsDialog(QDialog):
 
         main_layout.addWidget(scroll_area)
 
-        close_button = PushButton("Close")
+        close_button = QPushButton("Close")
         close_button.clicked.connect(self.accept)
         main_layout.addWidget(close_button)
 

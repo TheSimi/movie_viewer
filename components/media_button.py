@@ -97,7 +97,7 @@ class MediaButton(PushButton):
 
             rm_show = context_menu.addAction("Delete show")
             rm_show.triggered.connect(self._remove_media)
-            
+
             rm_wached = context_menu.addAction("Delete watched")
             rm_wached.triggered.connect(self._remove_watched_folder)
         elif isinstance(self.media, Movie):

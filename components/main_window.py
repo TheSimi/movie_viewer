@@ -178,7 +178,7 @@ class MainGUIWindow(QMainWindow):
     ):
         # Check if we are in the process of loading
         self.loading_spinner.show()
-        
+
         if self.loading_threads.get(file_class, None) or self.loading_workers.get(
             file_class, None
         ):

@@ -128,7 +128,9 @@ class Show(Media):
             if not os.path.exists(os.path.join(self.path, "watched")):
                 os.makedirs(os.path.join(self.path, "watched"))
             if os.path.dirname(episode_path) != os.path.join(self.path, "watched"):
-                shutil.move(episode_path, os.path.join(self.path, "watched", episode_name))
+                shutil.move(
+                    episode_path, os.path.join(self.path, "watched", episode_name)
+                )
                 episode_path = os.path.join(self.path, "watched", episode_name)
 
         logger.info(

@@ -31,6 +31,11 @@ class EpisodesWindow(QDialog):
 
         main_layout = QVBoxLayout()
 
+        self.stats_label = QLabel()
+        self.stats_label.setStyleSheet("font-size: 14px; margin-bottom: 5px;")
+        main_layout.addWidget(self.stats_label)
+        self.update_stats()
+
         scroll_area = QScrollArea(self)
         scroll_area.setWidgetResizable(True)
 
@@ -47,6 +52,12 @@ class EpisodesWindow(QDialog):
         main_layout.addWidget(close_button)
 
         self.setLayout(main_layout)
+
+    def update_stats(self):
+        watched = len(self.media.watched_episode_list)
+        total = len(self.media.episode_list) + watched
+        percentage = round(watched / total * 100, 1) if total > 0 else 0
+        self.stats_label.setText(f"Watched: {watched}/{total} ({percentage}%)")
 
     def populate_episodes(self):
         unwatched = self.media.episode_list
@@ -67,6 +78,7 @@ class EpisodesWindow(QDialog):
             child = self.scroll_content_layout.takeAt(0)
             if child.widget():
                 child.widget().deleteLater()
+        self.update_stats()
         self.populate_episodes()
 
     def play_episode(self, episode_name: str):

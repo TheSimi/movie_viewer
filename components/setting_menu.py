@@ -78,7 +78,7 @@ class SettingsMenu(QDialog):
         copy_button.setFixedWidth(80)
         copy_button.clicked.connect(lambda: copy_text(self.media_player_edit.text()))
         buttons_layout.addWidget(copy_button)
-        
+
         use_default_player = PushButton("Default")
         use_default_player.setFixedWidth(100)
         use_default_player.clicked.connect(self._use_default_player)

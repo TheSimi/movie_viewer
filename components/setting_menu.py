@@ -154,7 +154,7 @@ class SettingsMenu(QDialog):
         # Add folder button
         self.add_button = QPushButton("Add Folder ")
         self.add_button.setIcon(QIcon(ADD_FOLDER_ICON_PATH))
-        self.add_button.setIconSize(QSize(14,  14))
+        self.add_button.setIconSize(QSize(14, 14))
         self.add_button.setLayoutDirection(Qt.LayoutDirection.RightToLeft)
         self.add_button.setFixedWidth(200)
         self.add_button.clicked.connect(self.add_folder)

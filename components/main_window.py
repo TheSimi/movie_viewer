@@ -285,15 +285,25 @@ class MainGUIWindow(QMainWindow):
         # Sorting logic
         match sort_option:
             case "Name":
-                media_list.sort(key=self._sort_by_name, reverse=self._is_media_list_reversed)
+                media_list.sort(
+                    key=self._sort_by_name, reverse=self._is_media_list_reversed
+                )
             case "Year":
-                media_list.sort(key=self._sort_by_year, reverse=self._is_media_list_reversed)
+                media_list.sort(
+                    key=self._sort_by_year, reverse=self._is_media_list_reversed
+                )
             case "Rating":
-                media_list.sort(key=self._sort_by_rating, reverse=self._is_media_list_reversed)
+                media_list.sort(
+                    key=self._sort_by_rating, reverse=self._is_media_list_reversed
+                )
             case "Path":
-                media_list.sort(key=self._sort_by_path, reverse=self._is_media_list_reversed)
+                media_list.sort(
+                    key=self._sort_by_path, reverse=self._is_media_list_reversed
+                )
             case "Length":
-                media_list.sort(key=self._sort_by_length, reverse=self._is_media_list_reversed)
+                media_list.sort(
+                    key=self._sort_by_length, reverse=self._is_media_list_reversed
+                )
 
         self.update_display()
 
@@ -335,7 +345,11 @@ class MainGUIWindow(QMainWindow):
         return length, -rating, -year, name.lower()
 
     def _on_reverse_button_click(self):
-        icon = self._up_arrow_icon if self._is_media_list_reversed else self._down_arrow_icon
+        icon = (
+            self._up_arrow_icon
+            if self._is_media_list_reversed
+            else self._down_arrow_icon
+        )
         self._is_media_list_reversed = not self._is_media_list_reversed
         self.reverse_button.setIcon(icon)
         self.resort_media_list()

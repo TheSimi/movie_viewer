@@ -101,4 +101,13 @@ _unknown_poster_draw.text(
 )
 
 SETTINGS_ICON_PATH = get_resource_path(os.path.join("assets", "settings.svg"))
+UP_ARROW_PATH = get_resource_path(os.path.join("assets", "arrow-up.svg"))
+DOWN_ARROW_PATH = get_resource_path(os.path.join("assets", "arrow-down.svg"))
+SPIN_UP_ARROW_PATH = get_resource_path(os.path.join("assets", "spin-arrow-up.svg"))
+SPIN_DOWN_ARROW_PATH = get_resource_path(os.path.join("assets", "spin-arrow-down.svg"))
+REFRESH_ICON_PATH = get_resource_path(os.path.join("assets", "refresh.svg"))
+COPY_ICON_PATH = get_resource_path(os.path.join("assets", "copy.svg"))
+TRASH_ICON_PATH = get_resource_path(os.path.join("assets", "trash.svg"))
+FOLDER_ICON_PATH = get_resource_path(os.path.join("assets", "folder.svg"))
+ADD_FOLDER_ICON_PATH = get_resource_path(os.path.join("assets", "add-folder.svg"))
 STYLESHEET_PATH = get_resource_path(os.path.join("styles", "macchiato.qss"))

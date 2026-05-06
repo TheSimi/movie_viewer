@@ -109,10 +109,9 @@ QComboBox::drop-down {
 }
 
 QComboBox::down-arrow {
-    image: none;
-    border-top: 5px solid #a5adcb;
-    border-left: 4px solid transparent;
-    border-right: 4px solid transparent;
+    image: url("{{ DOWN_ARROW_PATH }}");
+    width: 20px;
+    height: 20px;
 }
 
 QComboBox QAbstractItemView {
@@ -120,6 +119,11 @@ QComboBox QAbstractItemView {
     border: 1px solid #494d64;
     selection-background-color: #5b6078;
     color: #cad3f5;
+}
+
+QComboBox#SortCombo
+QComboBox#ListTypeCombo {
+    font-size: 16px;
 }
 
 /* ===== Labels ===== */
@@ -157,7 +161,7 @@ QLabel#StatsLabel {
 }
 
 QLabel#SortLabel {
-    font-size: 14px;
+    font-size: 16px;
     color: #a5adcb;
 }
 
@@ -300,6 +304,15 @@ QDoubleSpinBox::down-button {
 QDoubleSpinBox::up-button:hover,
 QDoubleSpinBox::down-button:hover {
     background-color: #6e738d;
+}
+
+
+QDoubleSpinBox::up-button {
+    image: url("{{ UP_ARROW_PATH }}");
+}
+
+QDoubleSpinBox::down-button {
+    image: url("{{ DOWN_ARROW_PATH }}");
 }
 
 /* ===== MessageBox ===== */

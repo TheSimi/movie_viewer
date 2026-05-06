@@ -9,6 +9,8 @@ from const import (
     DEFAULT_CONFIG,
     MOVIE_FOLDERS,
     SHOW_FOLDERS,
+    SPIN_DOWN_ARROW_PATH,
+    SPIN_UP_ARROW_PATH,
     STYLESHEET_PATH,
 )
 from services.logger import logger
@@ -27,7 +29,10 @@ def main():
     app = QApplication([])
 
     with open(STYLESHEET_PATH) as f:
-        app.setStyleSheet(f.read())
+        qss: str = f.read()
+    qss = qss.replace("{{ UP_ARROW_PATH }}", SPIN_UP_ARROW_PATH.replace("\\", "/"))
+    qss = qss.replace("{{ DOWN_ARROW_PATH }}", SPIN_DOWN_ARROW_PATH.replace("\\", "/"))
+    app.setStyleSheet(qss)
 
     win = MainGUIWindow(movie_folders=MOVIE_FOLDERS, show_folders=SHOW_FOLDERS)
     win.showMaximized()

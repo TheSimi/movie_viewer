@@ -1,8 +1,8 @@
 # Styles
 
-This directory contains the styles for the application.
+This directory contains the qss styles for the application.
 
-The colors used in here are from the Catppuccin macchiato theme.
+The colors used in this program are from the Catppuccin macchiato theme.
 
 ## Colors
 * crust: #181926

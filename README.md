@@ -158,6 +158,14 @@ scripts/build_prd.bat
 
 The dev script is just a little different, and builds a `.exe` where you can see the console and logs for yourself.
 
+#### Bulding script flow
+
+1. downloading / verifying download of uv via pip
+2. downloading / syncing dependecies via uv
+3. removing old build and dist folders if they exist
+4. using pyinstaller to build the `.exe` into the `dist/movie_viewer/` folder
+5. copying `config.json` if exists into the `dist/movie_viewer/_internal/` folder
+
 ## Future additions
 
 * GUI improvments

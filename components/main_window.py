@@ -32,8 +32,8 @@ from qt_utils.load_media_worker import LoadMediaWorker
 from services.logger import logger
 from utils.cache_utilis import clean_cache
 
-SCROLL_AREA_WIDTH = 900
-COMBO_BOX_WIDTH = 310
+UP_ARROW_ICON = QIcon(UP_ARROW_PATH)
+DOWN_ARROW_ICON = QIcon(DOWN_ARROW_PATH)
 
 
 class MainGUIWindow(QMainWindow):
@@ -82,7 +82,7 @@ class MainGUIWindow(QMainWindow):
         self.list_type_combo = QComboBox()
         self.list_type_combo.setObjectName("ListTypeCombo")
         self.list_type_combo.addItems(["Shows", "Movies"])
-        self.list_type_combo.setFixedSize(COMBO_BOX_WIDTH, 40)
+        self.list_type_combo.setFixedSize(310, 40)
         self.list_type_combo.currentIndexChanged.connect(
             lambda: {self.update_display(), self.resort_media_list()}
         )
@@ -98,12 +98,10 @@ class MainGUIWindow(QMainWindow):
         self.sort_label.setText("Sort by:")
 
         self._is_media_list_reversed = False
-        self._up_arrow_icon = QIcon(UP_ARROW_PATH)
-        self._down_arrow_icon = QIcon(DOWN_ARROW_PATH)
 
         self.reverse_button = QPushButton()
         self.reverse_button.setObjectName("ReverseButton")
-        self.reverse_button.setIcon(QIcon(DOWN_ARROW_PATH))
+        self.reverse_button.setIcon(DOWN_ARROW_ICON)
         self.reverse_button.setIconSize(QSize(20, 20))
         self.reverse_button.setFixedSize(50, 40)
         self.reverse_button.clicked.connect(self._on_reverse_button_click)
@@ -147,7 +145,7 @@ class MainGUIWindow(QMainWindow):
         scroll_wrapper.setAlignment(Qt.AlignmentFlag.AlignHCenter)
 
         self.scroll_area = QScrollArea()
-        self.scroll_area.setFixedWidth(SCROLL_AREA_WIDTH)
+        self.scroll_area.setFixedWidth(900)
         self.scroll_area.setWidgetResizable(True)
         self.scroll_area.setHorizontalScrollBarPolicy(
             Qt.ScrollBarPolicy.ScrollBarAlwaysOff
@@ -345,13 +343,9 @@ class MainGUIWindow(QMainWindow):
         return length, -rating, -year, name.lower()
 
     def _on_reverse_button_click(self):
-        icon = (
-            self._up_arrow_icon
-            if self._is_media_list_reversed
-            else self._down_arrow_icon
-        )
+        current_icon = UP_ARROW_ICON if self._is_media_list_reversed else DOWN_ARROW_ICON
         self._is_media_list_reversed = not self._is_media_list_reversed
-        self.reverse_button.setIcon(icon)
+        self.reverse_button.setIcon(current_icon)
         self.resort_media_list()
 
     def _on_refresh_button_click(self):

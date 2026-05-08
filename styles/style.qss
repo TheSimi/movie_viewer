@@ -58,8 +58,6 @@ QPushButton#MediaButton:checked {
 }
 
 QPushButton#SettingsButton {
-    background-color: #5b6078;
-    border: 1px solid #494d64;
     border-radius: 25px;
     font-size: 14px;
 }
@@ -71,9 +69,6 @@ QPushButton#SettingsButton:hover {
 
 QPushButton#ReverseButton,
 QPushButton#RefreshButton {
-    background-color: #5b6078;
-    border: 1px solid #494d64;
-    border-radius: 4px;
     font-size: 14px;
     padding: 6px;
 }
@@ -134,7 +129,6 @@ QLabel {
 }
 
 QLabel#MediaNameLabel {
-    color: #cad3f5;
     font-size: 13px;
 }
 
@@ -151,7 +145,6 @@ QLabel#MediaLengthLabel {
 QLabel#DetailLabel {
     font-size: 14px;
     margin-bottom: 10px;
-    color: #cad3f5;
 }
 
 QLabel#StatsLabel {
@@ -366,11 +359,8 @@ QToolTip {
 }
 
 /* ===== StackedLayout / Layout Containers ===== */
+QWidget#ScrollContent
 QWidget#MainScreen {
-    background-color: #24273a;
-}
-
-QWidget#ScrollContent {
     background-color: #24273a;
 }
 

@@ -1,13 +1,14 @@
 import json
 
-from PyQt6.QtCore import QPoint, Qt, QThread, QTimer
-from PyQt6.QtGui import QFont
+from PyQt6.QtCore import QPoint, QSize, Qt, QThread, QTimer
+from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import (
     QComboBox,
     QGridLayout,
     QHBoxLayout,
     QLabel,
     QMainWindow,
+    QPushButton,
     QScrollArea,
     QStackedLayout,
     QVBoxLayout,
@@ -18,15 +19,21 @@ from pyqtwaitingspinner.parameters import QColor
 
 from components.media_button import MediaButton
 from components.setting_menu import SettingsMenu
-from const import CONFIG_PATH, MEDIA_PLAYER
+from const import (
+    CONFIG_PATH,
+    DOWN_ARROW_PATH,
+    MEDIA_PLAYER,
+    REFRESH_ICON_PATH,
+    SETTINGS_ICON_PATH,
+    UP_ARROW_PATH,
+)
 from media_classes import Media, Movie, Show
 from qt_utils.load_media_worker import LoadMediaWorker
-from qt_utils.push_button import PushButton
 from services.logger import logger
 from utils.cache_utilis import clean_cache
 
-SCROLL_AREA_WIDTH = 900
-COMBO_BOX_WIDTH = 310
+UP_ARROW_ICON = QIcon(UP_ARROW_PATH)
+DOWN_ARROW_ICON = QIcon(DOWN_ARROW_PATH)
 
 
 class MainGUIWindow(QMainWindow):
@@ -49,6 +56,7 @@ class MainGUIWindow(QMainWindow):
         self.stack = QStackedLayout(self.central_widget)
 
         self.main_screen = QWidget()
+        self.main_screen.setObjectName("MainScreen")
         main_layout = QVBoxLayout(self.main_screen)
         main_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         main_layout.setContentsMargins(20, 20, 20, 20)
@@ -57,10 +65,11 @@ class MainGUIWindow(QMainWindow):
         # Settings button row
         settings_bar = QHBoxLayout()
         settings_bar.addStretch()
-        settings_btn = PushButton("⚙️")
-        settings_btn.setObjectName("SettingsButton")  # used in clear/restore
+        settings_btn = QPushButton()
+        settings_btn.setObjectName("SettingsButton")
+        settings_btn.setIcon(QIcon(SETTINGS_ICON_PATH))
+        settings_btn.setIconSize(QSize(28, 28))
         settings_btn.setFixedSize(50, 50)
-        settings_btn.setFont(QFont("Ariel", 14))
         settings_btn.clicked.connect(self.open_settings_menu)
         settings_bar.addWidget(settings_btn)
         main_layout.addLayout(settings_bar)
@@ -71,35 +80,37 @@ class MainGUIWindow(QMainWindow):
         top_controls_layout.setSpacing(20)
 
         self.list_type_combo = QComboBox()
+        self.list_type_combo.setObjectName("ListTypeCombo")
         self.list_type_combo.addItems(["Shows", "Movies"])
-        self.list_type_combo.setFixedWidth(COMBO_BOX_WIDTH)
-        self.list_type_combo.setFont(QFont("Arial", 14))
-        self.list_type_combo.setStyleSheet("padding: 6px;")
+        self.list_type_combo.setFixedSize(310, 40)
         self.list_type_combo.currentIndexChanged.connect(
             lambda: {self.update_display(), self.resort_media_list()}
         )
 
         self.sort_combo = QComboBox()
+        self.sort_combo.setObjectName("SortCombo")
         self.sort_combo.addItems(["Name", "Year", "Rating", "Path", "Length"])
-        self.sort_combo.setFixedWidth(120)
-        self.sort_combo.setFont(QFont("Arial", 14))
-        self.sort_combo.setStyleSheet("padding: 6px;")
+        self.sort_combo.setFixedSize(120, 40)
         self.sort_combo.currentIndexChanged.connect(self.resort_media_list)
 
         self.sort_label = QLabel()
+        self.sort_label.setObjectName("SortLabel")
         self.sort_label.setText("Sort by:")
-        self.sort_label.setFont(QFont("Arial", 14))
 
-        self.reverse_button = PushButton(style_sheet="padding: 6px;")
-        self.reverse_button.setText("▼")
-        self.reverse_button.setFont(QFont("Arial", 14))
-        self.reverse_button.setFixedWidth(50)
+        self._is_media_list_reversed = False
+
+        self.reverse_button = QPushButton()
+        self.reverse_button.setObjectName("ReverseButton")
+        self.reverse_button.setIcon(DOWN_ARROW_ICON)
+        self.reverse_button.setIconSize(QSize(20, 20))
+        self.reverse_button.setFixedSize(50, 40)
         self.reverse_button.clicked.connect(self._on_reverse_button_click)
 
-        self.refresh_button = PushButton(style_sheet="padding: 6px;")
-        self.refresh_button.setText("⭮")
-        self.refresh_button.setFont(QFont("Arial", 14))
-        self.refresh_button.setFixedWidth(50)
+        self.refresh_button = QPushButton()
+        self.refresh_button.setObjectName("RefreshButton")
+        self.refresh_button.setIcon(QIcon(REFRESH_ICON_PATH))
+        self.refresh_button.setIconSize(QSize(20, 20))
+        self.refresh_button.setFixedSize(50, 40)
         self.refresh_button.clicked.connect(self._on_refresh_button_click)
 
         loading_spinner_parameters = SpinnerParameters(
@@ -134,7 +145,7 @@ class MainGUIWindow(QMainWindow):
         scroll_wrapper.setAlignment(Qt.AlignmentFlag.AlignHCenter)
 
         self.scroll_area = QScrollArea()
-        self.scroll_area.setFixedWidth(SCROLL_AREA_WIDTH)
+        self.scroll_area.setFixedWidth(900)
         self.scroll_area.setWidgetResizable(True)
         self.scroll_area.setHorizontalScrollBarPolicy(
             Qt.ScrollBarPolicy.ScrollBarAlwaysOff
@@ -147,6 +158,7 @@ class MainGUIWindow(QMainWindow):
         main_layout.addLayout(scroll_wrapper)
 
         self.scroll_content = QWidget()
+        self.scroll_content.setObjectName("ScrollContent")
         self.grid_layout = QGridLayout(self.scroll_content)
         self.grid_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         self.grid_layout.setHorizontalSpacing(20)
@@ -264,7 +276,6 @@ class MainGUIWindow(QMainWindow):
     def resort_media_list(self):
         sort_option = self.sort_combo.currentText()
         current_type = self.list_type_combo.currentText()
-        reverse_sorting = self.reverse_button.text() == "▲"
 
         # Get the correct list to sort
         media_list = self.media_lists[Show if current_type == "Shows" else Movie]
@@ -272,15 +283,25 @@ class MainGUIWindow(QMainWindow):
         # Sorting logic
         match sort_option:
             case "Name":
-                media_list.sort(key=self._sort_by_name, reverse=reverse_sorting)
+                media_list.sort(
+                    key=self._sort_by_name, reverse=self._is_media_list_reversed
+                )
             case "Year":
-                media_list.sort(key=self._sort_by_year, reverse=reverse_sorting)
+                media_list.sort(
+                    key=self._sort_by_year, reverse=self._is_media_list_reversed
+                )
             case "Rating":
-                media_list.sort(key=self._sort_by_rating, reverse=reverse_sorting)
+                media_list.sort(
+                    key=self._sort_by_rating, reverse=self._is_media_list_reversed
+                )
             case "Path":
-                media_list.sort(key=self._sort_by_path, reverse=reverse_sorting)
+                media_list.sort(
+                    key=self._sort_by_path, reverse=self._is_media_list_reversed
+                )
             case "Length":
-                media_list.sort(key=self._sort_by_length, reverse=reverse_sorting)
+                media_list.sort(
+                    key=self._sort_by_length, reverse=self._is_media_list_reversed
+                )
 
         self.update_display()
 
@@ -322,7 +343,9 @@ class MainGUIWindow(QMainWindow):
         return length, -rating, -year, name.lower()
 
     def _on_reverse_button_click(self):
-        self.reverse_button.setText("▲" if self.reverse_button.text() == "▼" else "▼")
+        current_icon = UP_ARROW_ICON if self._is_media_list_reversed else DOWN_ARROW_ICON
+        self._is_media_list_reversed = not self._is_media_list_reversed
+        self.reverse_button.setIcon(current_icon)
         self.resort_media_list()
 
     def _on_refresh_button_click(self):

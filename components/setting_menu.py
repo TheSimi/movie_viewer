@@ -1,7 +1,8 @@
 import os
 import subprocess
 
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import QSize, Qt
+from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import (
     QComboBox,
     QDialog,
@@ -10,6 +11,7 @@ from PyQt6.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QLineEdit,
+    QPushButton,
     QScrollArea,
     QSizePolicy,
     QVBoxLayout,
@@ -17,14 +19,17 @@ from PyQt6.QtWidgets import (
 )
 
 from const import (
+    ADD_FOLDER_ICON_PATH,
     CACHE_DIR,
+    COPY_ICON_PATH,
     DEFAULT_VLC_PATH,
+    FOLDER_ICON_PATH,
     MEDIA_PLAYER,
     MOVIE_FOLDERS,
     PLAY_SPEED,
     SHOW_FOLDERS,
+    TRASH_ICON_PATH,
 )
-from qt_utils.push_button import PushButton
 from services.logger import logger
 from utils.utils import copy_text
 
@@ -59,7 +64,7 @@ class SettingsMenu(QDialog):
 
         self.media_player_edit = QLineEdit()
         self.media_player_edit.setText(media_player)
-        self.media_player_edit.setFixedWidth(190)
+        self.media_player_edit.setFixedWidth(250)
         self.media_player_edit.setReadOnly(True)
         self.media_player_edit.setSizePolicy(
             QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed
@@ -69,18 +74,22 @@ class SettingsMenu(QDialog):
         buttons_layout = QHBoxLayout()
         buttons_layout.setSpacing(5)
 
-        browse_button = PushButton("Browse")
-        browse_button.setFixedWidth(100)
+        browse_button = QPushButton()
+        browse_button.setIcon(QIcon(FOLDER_ICON_PATH))
+        browse_button.setIconSize(QSize(20, 20))
+        browse_button.setFixedSize(35, 35)
         browse_button.clicked.connect(self._browse_media_player)
         buttons_layout.addWidget(browse_button)
 
-        copy_button = PushButton("Copy")
-        copy_button.setFixedWidth(80)
+        copy_button = QPushButton()
+        copy_button.setIcon(QIcon(COPY_ICON_PATH))
+        copy_button.setIconSize(QSize(20, 20))
+        copy_button.setFixedSize(35, 35)
         copy_button.clicked.connect(lambda: copy_text(self.media_player_edit.text()))
         buttons_layout.addWidget(copy_button)
 
-        use_default_player = PushButton("Default")
-        use_default_player.setFixedWidth(100)
+        use_default_player = QPushButton("Default")
+        use_default_player.setFixedSize(100, 35)
         use_default_player.clicked.connect(self._use_default_player)
         buttons_layout.addWidget(use_default_player)
 
@@ -110,7 +119,10 @@ class SettingsMenu(QDialog):
         self._update_speed_row()
 
         # ─── Clear Cache Button ───
-        self.open_cache_button = PushButton("Open Cache")
+        self.open_cache_button = QPushButton("Open Cache ")
+        self.open_cache_button.setIcon(QIcon(FOLDER_ICON_PATH))
+        self.open_cache_button.setIconSize(QSize(14, 14))
+        self.open_cache_button.setLayoutDirection(Qt.LayoutDirection.RightToLeft)
         self.open_cache_button.setFixedWidth(150)
         self.open_cache_button.clicked.connect(self.open_cache_folder)
         outer_layout.addWidget(
@@ -140,13 +152,16 @@ class SettingsMenu(QDialog):
         self.scroll_area.setWidget(self.scroll_content)
 
         # Add folder button
-        self.add_button = PushButton("Add Folder")
+        self.add_button = QPushButton("Add Folder ")
+        self.add_button.setIcon(QIcon(ADD_FOLDER_ICON_PATH))
+        self.add_button.setIconSize(QSize(14, 14))
+        self.add_button.setLayoutDirection(Qt.LayoutDirection.RightToLeft)
         self.add_button.setFixedWidth(200)
         self.add_button.clicked.connect(self.add_folder)
         outer_layout.addWidget(self.add_button, alignment=Qt.AlignmentFlag.AlignHCenter)
 
         # Confirm button
-        confirm_btn = PushButton("Confirm")
+        confirm_btn = QPushButton("Confirm")
         confirm_btn.setFixedWidth(200)
         confirm_btn.clicked.connect(self.accept)
         outer_layout.addWidget(confirm_btn, alignment=Qt.AlignmentFlag.AlignHCenter)
@@ -203,8 +218,10 @@ class SettingsMenu(QDialog):
         for folder in folders:
             row = QHBoxLayout()
             label = QLabel(folder)
-            remove_btn = PushButton("Remove")
-            remove_btn.setFixedWidth(100)
+            remove_btn = QPushButton()
+            remove_btn.setIcon(QIcon(TRASH_ICON_PATH))
+            remove_btn.setIconSize(QSize(18, 18))
+            remove_btn.setFixedSize(30, 30)
             remove_btn.clicked.connect(lambda _, f=folder: self.remove_folder(f))
             row.addWidget(label)
             row.addStretch()

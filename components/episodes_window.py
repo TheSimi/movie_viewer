@@ -32,7 +32,7 @@ class EpisodesWindow(QDialog):
         main_layout = QVBoxLayout()
 
         self.stats_label = QLabel()
-        self.stats_label.setStyleSheet("font-size: 14px; margin-bottom: 5px;")
+        self.stats_label.setObjectName("StatsLabel")
         main_layout.addWidget(self.stats_label)
         self.update_stats()
 

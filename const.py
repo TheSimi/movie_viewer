@@ -1,10 +1,20 @@
 import json
 import os
+import sys
 from typing import cast
 
 from PIL import Image, ImageDraw, ImageFont
 
-CONFIG_PATH = os.path.join(os.path.dirname(__file__), "config.json")
+
+def get_resource_path(relative_path: str) -> str:
+    if getattr(sys, "frozen", False):
+        base_path = sys._MEIPASS  # pyright: ignore[reportAttributeAccessIssue]
+    else:
+        base_path = os.path.dirname(__file__)
+    return os.path.join(base_path, relative_path)
+
+
+CONFIG_PATH = get_resource_path("config.json")
 
 DEFAULT_VLC_PATH = next(
     (
@@ -90,11 +100,17 @@ _unknown_poster_draw.text(
     (_unknown_poster_x, _unknown_poster_y), "?", fill="white", font=_unknown_poster_font
 )
 
-IDLE_BUTTON_STYLESHEET = (
-    "border: 2px solid #222; background-color: none; border-radius: 4px; color: white;"
-)
-FOCUSED_BUTTON_STYLESHEET = (
-    "border: 2px solid white; background-color: none; border-radius: 4px; color: white;"
-)
-TEXT_LABEL_STYLESHEET = "color: white; background: none; border: none;"
-IMAGE_LABEL_STYLESHEET = "background: none; border: none;"
+ASSETS_FOLDER = get_resource_path("assets")
+STYLES_FOLDER = get_resource_path("styles")
+
+SETTINGS_ICON_PATH = os.path.join(ASSETS_FOLDER, "settings.svg")
+UP_ARROW_PATH = os.path.join(ASSETS_FOLDER, "arrow-up.svg")
+DOWN_ARROW_PATH = os.path.join(ASSETS_FOLDER, "arrow-down.svg")
+SPIN_UP_ARROW_PATH = os.path.join(ASSETS_FOLDER, "spin-arrow-up.svg")
+SPIN_DOWN_ARROW_PATH = os.path.join(ASSETS_FOLDER, "spin-arrow-down.svg")
+REFRESH_ICON_PATH = os.path.join(ASSETS_FOLDER, "refresh.svg")
+COPY_ICON_PATH = os.path.join(ASSETS_FOLDER, "copy.svg")
+TRASH_ICON_PATH = os.path.join(ASSETS_FOLDER, "trash.svg")
+FOLDER_ICON_PATH = os.path.join(ASSETS_FOLDER, "folder.svg")
+ADD_FOLDER_ICON_PATH = os.path.join(ASSETS_FOLDER, "add-folder.svg")
+STYLESHEET_PATH = os.path.join(STYLES_FOLDER, "style.qss")

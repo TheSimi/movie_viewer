@@ -1,20 +1,27 @@
 from functools import cached_property
+from typing import cast
 
 from PIL.ImageQt import ImageQt
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QPixmap
-from PyQt6.QtWidgets import QLabel, QMainWindow, QMenu, QMessageBox, QVBoxLayout
+from PyQt6.QtWidgets import (
+    QLabel,
+    QMainWindow,
+    QMenu,
+    QMessageBox,
+    QPushButton,
+    QVBoxLayout,
+)
 
 from components.details_window import MediaDetailsDialog
 from components.episodes_window import EpisodesWindow
 from components.play_window import PlayWindow
 from components.search_window import SearchWindow
-from const import IMAGE_LABEL_STYLESHEET, MEDIA_PLAYER, TEXT_LABEL_STYLESHEET
+from const import MEDIA_PLAYER
 from media_classes import Media, Movie, Show
-from qt_utils.push_button import PushButton
 
 
-class MediaButton(PushButton):
+class MediaButton(QPushButton):
     def __init__(
         self,
         media: Media,
@@ -23,6 +30,7 @@ class MediaButton(PushButton):
         parent=None,
     ):
         super().__init__(parent)
+        self.setObjectName("MediaButton")
         self.media = media
         self.speed = speed
         self.media_player = media_player
@@ -33,19 +41,18 @@ class MediaButton(PushButton):
         self.image_label = QLabel()
         self.image_label.setFixedSize(150, 220)
         self.image_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.image_label.setStyleSheet(IMAGE_LABEL_STYLESHEET)
         self.image_loaded = False
 
         # Text label
         self.name_year_label = QLabel(f"{media.name} ({media.year})")
+        self.name_year_label.setObjectName("MediaNameLabel")
         self.name_year_label.setWordWrap(True)
         self.name_year_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
-        self.name_year_label.setStyleSheet(TEXT_LABEL_STYLESHEET)
 
         self.rating_label = QLabel(f"{media.rating}⭐")
+        self.rating_label.setObjectName("MediaRatingLabel")
         self.rating_label.setWordWrap(True)
         self.rating_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
-        self.rating_label.setStyleSheet(TEXT_LABEL_STYLESHEET)
 
         # Layout
         self.main_layout = QVBoxLayout()
@@ -59,9 +66,9 @@ class MediaButton(PushButton):
             self.length_label = QLabel(
                 f"[ {self.media.runtime // 60:02d}:{self.media.runtime % 60:02d} ]"
             )
+            self.length_label.setObjectName("MediaLengthLabel")
             self.length_label.setWordWrap(True)
             self.length_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
-            self.length_label.setStyleSheet(TEXT_LABEL_STYLESHEET)
             self.main_layout.addWidget(self.length_label)
 
         self.setLayout(self.main_layout)
@@ -120,7 +127,7 @@ class MediaButton(PushButton):
 
     def _open_episodes_window(self):
         episodes_win = EpisodesWindow(
-            self.media,
+            cast(Show, self.media),
             media_player=self.media_player,
             speed=self.speed,
             parent=self.main_window,

@@ -14,26 +14,17 @@ class Show(Media):
     _KEYS = ["name", "plot", "rating", "year", "episodes", "seasons", "image"]
 
     def __init__(self, path: str, **kwargs):
-        super().__init__(
-            path, client_class=ShowClient, id=kwargs.pop("id", None), **kwargs
-        )
+        super().__init__(path, client_class=ShowClient, id=kwargs.pop("id", None), **kwargs)
         if kwargs:
             return
 
-        self.name = self.data.get(
-            "name", os.path.splitext(os.path.basename(self.path))[0]
-        )
+        self.name = self.data.get("name", os.path.splitext(os.path.basename(self.path))[0])
         self.plot = re.sub(r"<.*?>", "", self.data.get("summary", ""))
         self.rating = self.data.get("rating", {}).get("average", 0)
         self.year = int(self.data.get("premiered", "0000-00-00").split("-")[0])
         self.episodes = len(self.data.get("_embedded", {}).get("episodes", []))
         self.seasons = (
-            max(
-                {
-                    episode["season"]
-                    for episode in self.data.get("_embedded", {}).get("episodes", [])
-                }
-            )
+            max({episode["season"] for episode in self.data.get("_embedded", {}).get("episodes", [])})
             if self.data.get("_embedded", {}).get("episodes")
             else 0
         )
@@ -128,18 +119,12 @@ class Show(Media):
             if not os.path.exists(os.path.join(self.path, "watched")):
                 os.makedirs(os.path.join(self.path, "watched"))
             if os.path.dirname(episode_path) != os.path.join(self.path, "watched"):
-                shutil.move(
-                    episode_path, os.path.join(self.path, "watched", episode_name)
-                )
+                shutil.move(episode_path, os.path.join(self.path, "watched", episode_name))
                 episode_path = os.path.join(self.path, "watched", episode_name)
 
-        logger.info(
-            f"Playing episode {episode_name} of show {self.name} with {media_player} at speed {speed}"
-        )
+        logger.info(f"Playing episode {episode_name} of show {self.name} with {media_player} at speed {speed}")
         if self.is_vlc(media_player):
-            subprocess.Popen(
-                f'"{media_player}" "{episode_path}" --rate={speed} --play-and-exit'
-            )
+            subprocess.Popen(f'"{media_player}" "{episode_path}" --rate={speed} --play-and-exit')
         else:
             logger.warning(
                 f"Playing episode {episode_name} of show {self.name} with windows default player without speed control"
@@ -189,22 +174,16 @@ class Show(Media):
                 os.path.join(self.path, "watched", current_episode),
             )
             current_episode = os.path.join(self.path, "watched", current_episode)
-            logger.info(
-                f"Playing episode {current_episode} of show {self.name} with {media_player} at speed {speed}"
-            )
+            logger.info(f"Playing episode {current_episode} of show {self.name} with {media_player} at speed {speed}")
             if self.is_vlc(media_player):
-                subprocess.Popen(
-                    f'"{media_player}" "{current_episode}" --rate={speed} --play-and-exit'
-                )
+                subprocess.Popen(f'"{media_player}" "{current_episode}" --rate={speed} --play-and-exit')
             else:
                 logger.warning(
                     f"Playing episode {current_episode} of show {self.name} with windows default player without speed control, because the given media player is not VLC"
                 )
                 os.startfile(current_episode)
         else:
-            logger.warning(
-                f"No episodes found for show {self.name} in path {self.path}, opening folder instead"
-            )
+            logger.warning(f"No episodes found for show {self.name} in path {self.path}, opening folder instead")
             try:
                 file = os.path.join(self.path, os.listdir(self.path)[0])
             except IndexError:

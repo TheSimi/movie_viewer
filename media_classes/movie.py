@@ -14,25 +14,19 @@ class Movie(Media):
     _KEYS = ["is_file", "name", "plot", "rating", "runtime", "year", "image"]
 
     def __init__(self, path: str, **kwargs):
-        super().__init__(
-            path, client_class=MovieClient, id=kwargs.pop("id", None), **kwargs
-        )
+        super().__init__(path, client_class=MovieClient, id=kwargs.pop("id", None), **kwargs)
         if kwargs:
             return
 
         self.is_file = os.path.isfile(self.path)
 
-        self.name = self.data.get(
-            "name", os.path.splitext(os.path.basename(self.path))[0]
-        )
+        self.name = self.data.get("name", os.path.splitext(os.path.basename(self.path))[0])
         self.plot = self.data.get("description", "")
         self.rating = self.data.get("aggregateRating", {}).get("ratingValue", 0)
         try:
             self.runtime = int(self.data.get("duration", 0))
         except ValueError:
-            self.runtime = self.get_time_from_string(
-                self.data.get("duration", "PT0H0M")
-            )
+            self.runtime = self.get_time_from_string(self.data.get("duration", "PT0H0M"))
         self.year = int(self.data.get("datePublished", "0000-00-00").split("-")[0])
 
         self.save_to_cache()
@@ -120,13 +114,9 @@ class Movie(Media):
         :type speed: float, optional
         """
         if self.is_file:
-            logger.info(
-                f"Playing movie file {self.path} with {media_player} at speed {speed}"
-            )
+            logger.info(f"Playing movie file {self.path} with {media_player} at speed {speed}")
             if self.is_vlc(media_player):
-                subprocess.Popen(
-                    f'"{media_player}" "{self.path}" --rate={speed} --play-and-exit'
-                )
+                subprocess.Popen(f'"{media_player}" "{self.path}" --rate={speed} --play-and-exit')
             else:
                 logger.warning(
                     f"Playing movie file {self.path} with windows default player without speed control, because the given media player is not VLC"
@@ -143,9 +133,7 @@ class Movie(Media):
                 first_file = os.path.join(self.path, files_list[0])
                 subprocess.Popen(f'explorer /select,"{first_file}"')
 
-    def _play_folder_with_vlc(
-        self, files_list: list[str], media_player: str, speed: float
-    ):
+    def _play_folder_with_vlc(self, files_list: list[str], media_player: str, speed: float):
         """
         Plays a folder of videos with VLC, using the given media player and speed.
         If there is only one video file in the folder, it will be played with any subtitles file in the folder.
@@ -156,22 +144,16 @@ class Movie(Media):
             if file.endswith(VIDEO_EXTENTIONS):
                 video_file_list.append(file)
         if len(video_file_list) == 1:
-            self._play_file_with_subtitles_vlc(
-                files_list, media_player, speed, video_file_list[0]
-            )
+            self._play_file_with_subtitles_vlc(files_list, media_player, speed, video_file_list[0])
         else:
-            logger.info(
-                f"Playing movie files {video_file_list} with {media_player} at speed {speed} as a playlist"
-            )
+            logger.info(f"Playing movie files {video_file_list} with {media_player} at speed {speed} as a playlist")
             command = f'"{media_player}" '
             for video in video_file_list:
                 command += f'"{os.path.join(self.path, video)}" '
             command += f"--rate={speed} --play-and-exit"
             subprocess.Popen(command)
 
-    def _play_file_with_subtitles_vlc(
-        self, files_list, media_player, speed, video_file
-    ):
+    def _play_file_with_subtitles_vlc(self, files_list, media_player, speed, video_file):
         """
         Plays a single video file with any available subtitle file from the same folder using VLC.
         If there is only one subtitle file, it will be used.

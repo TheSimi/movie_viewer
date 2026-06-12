@@ -31,12 +31,8 @@ class ApiClient(abc.ABC):
                 response.raise_for_status()
                 return response
             except HTTPError as e:
-                logger.error(
-                    f"Failed to make request to {url}: {e.response.status_code} | {e.response.text}"
-                )
-        raise Exception(
-            f"Failed to make request to {url} after {RETRY_AMOUNT} attempts"
-        )
+                logger.error(f"Failed to make request to {url}: {e.response.status_code} | {e.response.text}")
+        raise Exception(f"Failed to make request to {url} after {RETRY_AMOUNT} attempts")
 
     @classmethod
     def get(cls, url, *args, **kwargs) -> Response:

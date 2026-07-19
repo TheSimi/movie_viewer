@@ -99,6 +99,7 @@ class Media(abc.ABC):
         cache_path = self.cache_path(self.path)
         os.makedirs(cache_path, exist_ok=True)
         image_path = os.path.join(cache_path, "image.png")
+        self.image.info.pop("icc_profile", None)
         self.image.save(image_path)
 
     @abc.abstractmethod

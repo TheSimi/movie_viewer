@@ -19,9 +19,7 @@ from utils.cache_utilis import cache_version_handler
 
 def main():
     if not os.path.exists(CONFIG_PATH):
-        logger.debug(
-            f"Could not find config.json at {CONFIG_PATH}. Creating a new one with default values."
-        )
+        logger.debug(f"Could not find config.json at {CONFIG_PATH}. Creating a new one with default values.")
         with open(CONFIG_PATH, "w") as f:
             json.dump(DEFAULT_CONFIG, f, indent=4)
     cache_version_handler()

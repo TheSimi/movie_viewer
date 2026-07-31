@@ -84,21 +84,15 @@ SUBTITLE_EXTENTIONS = (
 UNKNOWN_POSTER = Image.new("RGB", (300, 440), color="black")
 _unknown_poster_draw = ImageDraw.Draw(UNKNOWN_POSTER)
 _unknown_poster_font = ImageFont.load_default(size=128)
-_unknown_poster_text_bbox = _unknown_poster_draw.textbbox(
-    (0, 0), "?", font=_unknown_poster_font
-)
+_unknown_poster_text_bbox = _unknown_poster_draw.textbbox((0, 0), "?", font=_unknown_poster_font)
 _unknown_poster_text_width = _unknown_poster_text_bbox[2] - _unknown_poster_text_bbox[0]
-_unknown_poster_text_height = (
-    _unknown_poster_text_bbox[3] - _unknown_poster_text_bbox[1]
-)
+_unknown_poster_text_height = _unknown_poster_text_bbox[3] - _unknown_poster_text_bbox[1]
 _unknown_poster_x = (300 - _unknown_poster_text_width) / 2
 _unknown_poster_y = (440 - _unknown_poster_text_height) / 2
 if "text_bbox" in locals():
     _unknown_poster_x -= _unknown_poster_text_bbox[0]
     _unknown_poster_y -= _unknown_poster_text_bbox[1]
-_unknown_poster_draw.text(
-    (_unknown_poster_x, _unknown_poster_y), "?", fill="white", font=_unknown_poster_font
-)
+_unknown_poster_draw.text((_unknown_poster_x, _unknown_poster_y), "?", fill="white", font=_unknown_poster_font)
 
 ASSETS_FOLDER = get_resource_path("assets")
 STYLES_FOLDER = get_resource_path("styles")

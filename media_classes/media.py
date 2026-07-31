@@ -40,9 +40,7 @@ class Media(abc.ABC):
             self.data = client_class.get_media(self.id, title=filename)
             self.image = client_class.get_poster(self.id, title=filename)
         except Exception as e:
-            logger.warning(
-                f"Failed to fetch for {filename}: {e.__class__.__name__} | {e}"
-            )
+            logger.warning(f"Failed to fetch for {filename}: {e.__class__.__name__} | {e}")
             self.data = {}
             self.image = UNKNOWN_POSTER
 

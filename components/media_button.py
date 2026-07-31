@@ -63,9 +63,7 @@ class MediaButton(QPushButton):
         self.main_layout.addWidget(self.rating_label)
 
         if isinstance(self.media, Movie):
-            self.length_label = QLabel(
-                f"[ {self.media.runtime // 60:02d}:{self.media.runtime % 60:02d} ]"
-            )
+            self.length_label = QLabel(f"[ {self.media.runtime // 60:02d}:{self.media.runtime % 60:02d} ]")
             self.length_label.setObjectName("MediaLengthLabel")
             self.length_label.setWordWrap(True)
             self.length_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
@@ -73,9 +71,7 @@ class MediaButton(QPushButton):
 
         self.setLayout(self.main_layout)
 
-        self.clicked.connect(
-            lambda: self.media.play(media_player=self.media_player, speed=self.speed)
-        )
+        self.clicked.connect(lambda: self.media.play(media_player=self.media_player, speed=self.speed))
 
         self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.customContextMenuRequested.connect(self._show_context_menu)

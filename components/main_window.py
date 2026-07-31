@@ -83,9 +83,7 @@ class MainGUIWindow(QMainWindow):
         self.list_type_combo.setObjectName("ListTypeCombo")
         self.list_type_combo.addItems(["Shows", "Movies"])
         self.list_type_combo.setFixedSize(310, 40)
-        self.list_type_combo.currentIndexChanged.connect(
-            lambda: {self.update_display(), self.resort_media_list()}
-        )
+        self.list_type_combo.currentIndexChanged.connect(lambda: {self.update_display(), self.resort_media_list()})
 
         self.sort_combo = QComboBox()
         self.sort_combo.setObjectName("SortCombo")
@@ -126,9 +124,7 @@ class MainGUIWindow(QMainWindow):
             center_on_parent=False,
             disable_parent_when_spinning=False,
         )
-        self.loading_spinner = WaitingSpinner(
-            self, spinner_parameters=loading_spinner_parameters
-        )
+        self.loading_spinner = WaitingSpinner(self, spinner_parameters=loading_spinner_parameters)
         self.loading_spinner.start()
         self.loading_spinner.hide()
 
@@ -147,12 +143,8 @@ class MainGUIWindow(QMainWindow):
         self.scroll_area = QScrollArea()
         self.scroll_area.setFixedWidth(900)
         self.scroll_area.setWidgetResizable(True)
-        self.scroll_area.setHorizontalScrollBarPolicy(
-            Qt.ScrollBarPolicy.ScrollBarAlwaysOff
-        )
-        self.scroll_area.verticalScrollBar().valueChanged.connect(
-            self.lazy_load_visible_buttons
-        )
+        self.scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.scroll_area.verticalScrollBar().valueChanged.connect(self.lazy_load_visible_buttons)
 
         scroll_wrapper.addWidget(self.scroll_area)
         main_layout.addLayout(scroll_wrapper)
@@ -191,12 +183,8 @@ class MainGUIWindow(QMainWindow):
         # Check if we are in the process of loading
         self.loading_spinner.show()
 
-        if self.loading_threads.get(file_class, None) or self.loading_workers.get(
-            file_class, None
-        ):
-            logger.warning(
-                f"Already loading {file_class.__name__} list, skipping new load request."
-            )
+        if self.loading_threads.get(file_class, None) or self.loading_workers.get(file_class, None):
+            logger.warning(f"Already loading {file_class.__name__} list, skipping new load request.")
             return
 
         # Init worker and thread
@@ -205,20 +193,14 @@ class MainGUIWindow(QMainWindow):
         self.loading_workers[file_class].moveToThread(self.loading_threads[file_class])
 
         # Connect signals for start and end
-        self.loading_threads[file_class].started.connect(
-            self.loading_workers[file_class].run
-        )
+        self.loading_threads[file_class].started.connect(self.loading_workers[file_class].run)
         self.loading_workers[file_class].finished.connect(
             lambda media_list: self._on_media_loaded(media_list, file_class)
         )
 
         # Clean up thread and worker after finishing
-        self.loading_threads[file_class].finished.connect(
-            self.loading_threads[file_class].deleteLater
-        )
-        self.loading_threads[file_class].finished.connect(
-            lambda: self.loading_threads.pop(file_class, None)
-        )
+        self.loading_threads[file_class].finished.connect(self.loading_threads[file_class].deleteLater)
+        self.loading_threads[file_class].finished.connect(lambda: self.loading_threads.pop(file_class, None))
 
         # Start loading in the background
         self.loading_threads[file_class].start()
@@ -248,9 +230,7 @@ class MainGUIWindow(QMainWindow):
 
         self.media_player = self.settings_menu.media_player_edit.text()
 
-        self.load_show_movie_lists(
-            self.settings_menu.movie_folders, self.settings_menu.show_folders
-        )
+        self.load_show_movie_lists(self.settings_menu.movie_folders, self.settings_menu.show_folders)
 
     def update_display(self):
         while self.grid_layout.count():
@@ -258,9 +238,7 @@ class MainGUIWindow(QMainWindow):
             if item.widget():
                 item.widget().deleteLater()
 
-        current_list = self.media_lists[
-            Show if self.list_type_combo.currentText() == "Shows" else Movie
-        ]
+        current_list = self.media_lists[Show if self.list_type_combo.currentText() == "Shows" else Movie]
         current_speed = self.settings_menu.speed_spin.value()
 
         self.media_buttons = []
@@ -283,25 +261,15 @@ class MainGUIWindow(QMainWindow):
         # Sorting logic
         match sort_option:
             case "Name":
-                media_list.sort(
-                    key=self._sort_by_name, reverse=self._is_media_list_reversed
-                )
+                media_list.sort(key=self._sort_by_name, reverse=self._is_media_list_reversed)
             case "Year":
-                media_list.sort(
-                    key=self._sort_by_year, reverse=self._is_media_list_reversed
-                )
+                media_list.sort(key=self._sort_by_year, reverse=self._is_media_list_reversed)
             case "Rating":
-                media_list.sort(
-                    key=self._sort_by_rating, reverse=self._is_media_list_reversed
-                )
+                media_list.sort(key=self._sort_by_rating, reverse=self._is_media_list_reversed)
             case "Path":
-                media_list.sort(
-                    key=self._sort_by_path, reverse=self._is_media_list_reversed
-                )
+                media_list.sort(key=self._sort_by_path, reverse=self._is_media_list_reversed)
             case "Length":
-                media_list.sort(
-                    key=self._sort_by_length, reverse=self._is_media_list_reversed
-                )
+                media_list.sort(key=self._sort_by_length, reverse=self._is_media_list_reversed)
 
         self.update_display()
 
@@ -312,9 +280,7 @@ class MainGUIWindow(QMainWindow):
             media_list[idx] = new_media
             self.resort_media_list()
         except ValueError:
-            logger.warning(
-                f"Old media {old_media.name} not found in list, appending new media."
-            )
+            logger.warning(f"Old media {old_media.name} not found in list, appending new media.")
             media_list.append(new_media)
 
     @staticmethod
@@ -349,9 +315,7 @@ class MainGUIWindow(QMainWindow):
         self.resort_media_list()
 
     def _on_refresh_button_click(self):
-        self.load_show_movie_lists(
-            self.settings_menu.movie_folders, self.settings_menu.show_folders
-        )
+        self.load_show_movie_lists(self.settings_menu.movie_folders, self.settings_menu.show_folders)
 
     def lazy_load_visible_buttons(self):
         scroll_value = self.scroll_area.verticalScrollBar().value()
@@ -365,9 +329,7 @@ class MainGUIWindow(QMainWindow):
         for button in self.media_buttons:
             # Get button's Y position relative to scroll area content
             btn_y = button.mapTo(self.scroll_area.widget(), QPoint(0, 0)).y()
-            if (
-                visible_top - 200 < btn_y < visible_bottom + 200
-            ):  # preload a bit outside view
+            if visible_top - 200 < btn_y < visible_bottom + 200:  # preload a bit outside view
                 button.load_image()
             else:
                 button.unload_image()

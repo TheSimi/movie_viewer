@@ -18,10 +18,8 @@ class ImdbdevClient(ApiClient):
 
     @classmethod
     def search_media(cls, title: str) -> str:
-        logger.debug(f"[Imdbdev] Searching for movie with title: {title}")
-        return cls.get("search/titles", params={"query": title}).json()["titles"][0][
-            "id"
-        ]
+        logger.debug(f"[Imdbdev] Searching for media with title: {title}")
+        return cls.get("search/titles", params={"query": title}).json()["titles"][0]["id"]
 
     @classmethod
     def get_media(cls, id: str, **kwargs) -> dict[str, Any]:  # noqa: ARG003
@@ -58,24 +56,16 @@ class ImdbdevClient(ApiClient):
 
     @classmethod
     def get_search_results(cls, title: str) -> list[dict[str, Any]]:
-        try:
-            logger.debug(f"[Imdbdev] Searching for movie with title: {title}")
-            response = cls.get("search/titles", params={"query": title}).json()[
-                "titles"
-            ]
-            search_results = []
-            for item in response:
-                search_results.append(
-                    {
-                        "name": item["primaryTitle"],
-                        "year": item.get("startYear", "N/A"),
-                        "id": item["id"],
-                        "imdb_url": f"https://www.imdb.com/title/{item['id']}/",
-                    }
-                )
-            return search_results
-        except Exception as e:
-            logger.warning(
-                f"Failed to fetch search results using imdb.dev for title '{title}': {e.__class__.__name__} | {e}"
+        logger.debug(f"[Imdbdev] Searching for movie with title: {title}")
+        response = cls.get("search/titles", params={"query": title}).json()["titles"]
+        search_results = []
+        for item in response:
+            search_results.append(
+                {
+                    "name": item["primaryTitle"],
+                    "year": item.get("startYear", "N/A"),
+                    "id": item["id"],
+                    "imdb_url": f"https://www.imdb.com/title/{item['id']}/",
+                }
             )
-            return []
+        return search_results

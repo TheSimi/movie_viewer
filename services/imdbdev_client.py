@@ -18,7 +18,7 @@ class ImdbdevClient(ApiClient):
 
     @classmethod
     def search_media(cls, title: str) -> str:
-        logger.debug(f"[Imdbdev] Searching for movie with title: {title}")
+        logger.debug(f"[Imdbdev] Searching for media with title: {title}")
         return cls.get("search/titles", params={"query": title}).json()["titles"][0]["id"]
 
     @classmethod

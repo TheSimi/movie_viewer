@@ -1,12 +1,10 @@
-import io
 from typing import Any
-
-from PIL import Image
 
 from const import UNKNOWN_POSTER
 from services.api_client import ApiClient
 from services.imdbdev_client import ImdbdevClient
 from services.logger import logger
+from services.tvmaze_client import TvmazeClient
 
 
 class ShowClient(ApiClient):
@@ -14,24 +12,18 @@ class ShowClient(ApiClient):
 
     @classmethod
     def search_media(cls, title: str) -> tuple[str | None, str | None]:
-        tvmaze_id = None
-        imdb_id = None
-
         try:
-            logger.debug(f"[Tvmaze] Searching for show with title: {title}")
-            response = cls.get("/singlesearch/shows", params={"q": title}).json()
-            tvmaze_id = response.get("id", None)
-            imdb_id = response.get("externals", {}).get("imdb", None)
+            tvmaze_id, imdb_id = TvmazeClient.search_media(title)
         except Exception as e:
-            logger.warning(f"Failed to search for show with title {title}: {e.__class__.__name__} | {e}")
+            logger.warning(f"[Tvmaze] Failed to search for show with title {title}: {e.__class__.__name__} | {e}")
+            tvmaze_id, imdb_id = None, None
 
         if not imdb_id:
             try:
-                logger.debug(f"[Imdbdev] Searching for show with title: {title}")
                 imdb_id = ImdbdevClient.search_media(title)
             except Exception as e:
                 logger.warning(
-                    f"Failed to search for show using imdb.dev with title {title}: {e.__class__.__name__} | {e}"
+                    f"[ShowClient] Failed to search for show using imdb.dev with title {title}: {e.__class__.__name__} | {e}"
                 )
 
         if not tvmaze_id and not imdb_id:
@@ -46,20 +38,23 @@ class ShowClient(ApiClient):
 
         if tvmaze_id:
             try:
-                logger.debug(f"[Tvmaze] Getting show with id: {tvmaze_id}")
-                tvmaze_data = cls.get(f"/shows/{tvmaze_id}", params={"embed": "episodes"}).json()
+                tvmaze_data = TvmazeClient.get_media(tvmaze_id)
             except Exception as e:
-                logger.warning(f"Failed to fetch data using tvmaze for {tvmaze_id}: {e.__class__.__name__} | {e}")
+                logger.warning(
+                    f"[ShowClient] Failed to fetch data using tvmaze for {tvmaze_id}: {e.__class__.__name__} | {e}"
+                )
 
         if imdb_id:
             try:
-                logger.debug(f"[Imdbdev] Getting show with id: {imdb_id}")
+                logger.debug(f"[ShowClient] Getting show with id: {imdb_id} using imdbdev")
                 imdb_data = ImdbdevClient.get_media(imdb_id, **kwargs)
                 imdb_data = ImdbdevClient.format_for_show(imdb_data)
                 if tvmaze_data:
                     tvmaze_data["rating"] = imdb_data["rating"]
             except Exception as e:
-                logger.warning(f"Failed to fetch data using imdb.dev for {imdb_id}: {e.__class__.__name__} | {e}")
+                logger.warning(
+                    f"[ShowClient] Failed to fetch data using imdb.dev for {imdb_id}: {e.__class__.__name__} | {e}"
+                )
 
         return tvmaze_data or imdb_data or {}
 
@@ -69,49 +64,31 @@ class ShowClient(ApiClient):
 
         if tvmaze_id:
             try:
-                logger.debug(f"[Tvmaze] Getting poster for show with id: {tvmaze_id}")
-                posters = [i for i in cls.get(f"/shows/{tvmaze_id}/images").json() if i["type"] == "poster"]
-                main_posters = [i for i in posters if i["main"]]
-                if main_posters:
-                    url = main_posters[0]["resolutions"]["original"]["url"]
-                else:
-                    url = posters[0]["resolutions"]["original"]["url"]
-                response = cls.session.get(url)
-                image = Image.open(io.BytesIO(response.content))
-                image.thumbnail((300, 440))
-                return image.convert("RGB")
+                return TvmazeClient.get_poster(tvmaze_id)
             except Exception as e:
-                logger.warning(f"Failed to fetch poster with tvmaze for {tvmaze_id}: {e.__class__.__name__} | {e}")
+                logger.warning(
+                    f"[ShowClient] Failed to fetch poster with tvmaze for {tvmaze_id}: {e.__class__.__name__} | {e}"
+                )
 
         if imdb_id:
             try:
-                logger.debug(f"[Imdbdev] Getting poster for show with id: {imdb_id}")
+                logger.debug(f"[ShowClient] Getting poster for show with id: {imdb_id} using imdbdev")
                 return ImdbdevClient.get_poster(imdb_id)
             except Exception as e:
-                logger.warning(f"Failed to fetch poster with imdb.dev for {imdb_id}: {e.__class__.__name__} | {e}")
+                logger.warning(
+                    f"[ShowClient] Failed to fetch poster with imdb.dev for {imdb_id}: {e.__class__.__name__} | {e}"
+                )
 
         return UNKNOWN_POSTER
 
     @classmethod
     def get_search_results(cls, title: str) -> list[dict[str, Any]]:
         try:
-            logger.debug(f"[Tvmaze] Getting search results for title: {title}")
-            response = cls.get("/search/shows", params={"q": title}).json()
-            search_results = []
-            for item in response:
-                info = item["show"]
-                year = info["premiered"].split("-")[0] if info["premiered"] else "N/A"
-                search_results.append(
-                    {
-                        "name": info["name"],
-                        "year": year,
-                        "id": (info["id"], info["externals"]["imdb"]),
-                        "imdb_url": f"https://www.imdb.com/title/{info['externals']['imdb']}",
-                    }
-                )
-            return search_results
+            return TvmazeClient.get_search_results(title)
         except Exception as e:
-            logger.warning(f"Failed to fetch search results for {title} with tvmaze: {e.__class__.__name__} | {e}")
+            logger.warning(
+                f"[ShowClient] Failed to fetch search results for {title} with tvmaze: {e.__class__.__name__} | {e}"
+            )
             try:
                 imdb_dev_results = ImdbdevClient.get_search_results(title)
                 for result in imdb_dev_results:
@@ -119,6 +96,6 @@ class ShowClient(ApiClient):
                 return imdb_dev_results
             except Exception as e:
                 logger.warning(
-                    f"Failed to fetch search results using imdb.dev for title '{title}': {e.__class__.__name__} | {e}"
+                    f"[ShowClient] Failed to fetch search results using imdb.dev for title '{title}': {e.__class__.__name__} | {e}"
                 )
                 return []

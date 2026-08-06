@@ -25,8 +25,8 @@ class Movie(Media):
         self.rating = self.data.get("aggregateRating", {}).get("ratingValue", 0)
         try:
             self.runtime = int(self.data.get("duration", 0))
-        except ValueError:
-            self.runtime = self.get_time_from_string(self.data.get("duration", "PT0H0M"))
+        except (TypeError, ValueError):
+            self.runtime = self.get_time_from_string(str(self.data.get("duration", "PT0H0M")))
         self.year = int(self.data.get("datePublished", "0000-00-00").split("-")[0])
 
         self.save_to_cache()
@@ -214,9 +214,9 @@ class Movie(Media):
 
     @staticmethod
     def get_time_from_string(time_string: str):
-        match = re.search(r"PT(?:(\d+)H)?(?:(\d+)M)?", time_string)
-
+        match = re.search(r"PT(?:(\d+)H)?(?:(\d+)M)?", str(time_string))
+        if not match:
+            return 0
         hours = int(match.group(1) or 0)
         minutes = int(match.group(2) or 0)
-
         return (hours * 60) + minutes

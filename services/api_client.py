@@ -9,7 +9,7 @@ from const import RETRY_AMOUNT
 from services.logger import logger
 
 # either just imdb id - e.g tt0133093
-# or tuple of (imdb_id, tvmaze_id) - e.g (tt0944947, 82)
+# or tuple of (tvmaze_id, imdb_id) - e.g (82, tt0944947)
 MediaId = str | tuple[str | None, str | None]
 
 

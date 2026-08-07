@@ -1,7 +1,7 @@
 from typing import Any
 
 from const import UNKNOWN_POSTER
-from services.api_client import ApiClient
+from services.api_client import ApiClient, MediaId
 from services.imdbdev_client import ImdbdevClient
 from services.logger import logger
 from services.tvmaze_client import TvmazeClient
@@ -31,8 +31,11 @@ class ShowClient(ApiClient):
         return tvmaze_id, imdb_id
 
     @classmethod
-    def get_media(cls, id: tuple[str | None, str | None], **kwargs) -> dict[str, Any]:
-        tvmaze_id, imdb_id = id
+    def get_media(cls, id: MediaId, **kwargs) -> dict[str, Any]:
+        if isinstance(id, tuple):
+            tvmaze_id, imdb_id = id
+        else:
+            tvmaze_id, imdb_id = id, None
         tvmaze_data = None
         imdb_data = None
 
@@ -59,8 +62,11 @@ class ShowClient(ApiClient):
         return tvmaze_data or imdb_data or {}
 
     @classmethod
-    def get_poster(cls, id: tuple[str | None, str | None], **kwargs):  # noqa: ARG003
-        tvmaze_id, imdb_id = id
+    def get_poster(cls, id: MediaId, **kwargs):  # noqa: ARG003
+        if isinstance(id, tuple):
+            tvmaze_id, imdb_id = id
+        else:
+            tvmaze_id, imdb_id = id, None
 
         if tvmaze_id:
             try:

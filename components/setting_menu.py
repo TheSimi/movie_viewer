@@ -190,12 +190,13 @@ class SettingsMenu(QDialog):
         self.current_type = self.type_selector.currentText()
         self.update_folder_list()
 
-    def update_folder_list(self):
+    def update_folder_list(self) -> None:
         # Clear current layout
         for i in reversed(range(self.scroll_layout.count())):
-            item = self.scroll_layout.itemAt(i).widget()
-            if item:
-                item.setParent(None)
+            item = self.scroll_layout.itemAt(i)
+            widget = item.widget() if item else None
+            if widget:
+                widget.setParent(None)
 
         folders = self.movie_folders if self.current_type == "Movies" else self.show_folders
 

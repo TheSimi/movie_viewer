@@ -3,7 +3,7 @@ from typing import Any
 
 from PIL import Image
 
-from services.api_client import ApiClient
+from services.api_client import ApiClient, MediaId
 from services.logger import logger
 
 
@@ -19,12 +19,12 @@ class TvmazeClient(ApiClient):
         return tvmaze_id, imdb_id
 
     @classmethod
-    def get_media(cls, id: str, **kwargs) -> dict[str, Any]:  # noqa: ARG003
+    def get_media(cls, id: MediaId, **kwargs) -> dict[str, Any]:  # noqa: ARG003
         logger.debug(f"[Tvmaze] Getting show with id: {id}")
         return cls.get(f"/shows/{id}", params={"embed": "episodes"}).json()
 
     @classmethod
-    def get_poster(cls, id: str, **kwargs) -> Image.Image:  # noqa: ARG003
+    def get_poster(cls, id: MediaId, **kwargs) -> Image.Image:  # noqa: ARG003
         logger.debug(f"[Tvmaze] Getting poster for show with id: {id}")
         posters = [i for i in cls.get(f"/shows/{id}/images").json() if i["type"] == "poster"]
         main_posters = [i for i in posters if i["main"]]

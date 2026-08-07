@@ -123,12 +123,15 @@ The program is made using these tools:
 * **pillow** - for image loading and editing
 * **requests** - to fetch info about media from the web
 * **ruff** - for linting
+* **mypy** - for static type checking
+* **pre-commit** - for running lint & typing checks on commits
 
 The program also uses some free-to use open APIs that don't require keys, these are:
 * **FM-DB API** - default api for movie info. [website](https://imdb.iamidiotareyoutoo.com) [documentation](https://imdb.iamidiotareyoutoo.com/docs/index.html)
 * **FM-DB API** - default api for movie info. [website](https://imdb.iamidiotareyoutoo.com) [documentation](https://imdb.iamidiotareyoutoo.com/docs/index.html)
 * **TV Maze** - default api for show info (except for rating). [website](https://www.tvmaze.com) [documentation](https://www.tvmaze.com/api)
 * **Imdb Dev** - default for show rating and fallback for everything else. [documentation](https://imdbapi.dev)
+* **Official imdb website** - when all else fails, we try and scrape info from the [official imdb website](https://www.imdb.com) itself
 
 ### Running localy
 
@@ -144,6 +147,12 @@ Clone the repository, then download dependecies and run:
 uv sync
 
 uv run main.py
+```
+
+Before commiting any changes, it is recommanded that you also run:
+
+```
+uv run pre-commit install
 ```
 
 ### Building localy

@@ -1,7 +1,7 @@
 import json
 
 from PyQt6.QtCore import QPoint, QSize, Qt, QThread, QTimer
-from PyQt6.QtGui import QIcon
+from PyQt6.QtGui import QCloseEvent, QIcon
 from PyQt6.QtWidgets import (
     QComboBox,
     QGridLayout,
@@ -37,7 +37,7 @@ DOWN_ARROW_ICON = QIcon(DOWN_ARROW_PATH)
 
 
 class MainGUIWindow(QMainWindow):
-    def __init__(self, movie_folders, show_folders):
+    def __init__(self, movie_folders: list[str], show_folders: list[str]):
         super().__init__()
         self._init_ui()
 
@@ -83,7 +83,7 @@ class MainGUIWindow(QMainWindow):
         self.list_type_combo.setObjectName("ListTypeCombo")
         self.list_type_combo.addItems(["Shows", "Movies"])
         self.list_type_combo.setFixedSize(310, 40)
-        self.list_type_combo.currentIndexChanged.connect(lambda: {self.update_display(), self.resort_media_list()})
+        self.list_type_combo.currentIndexChanged.connect(self._on_list_type_changed)
 
         self.sort_combo = QComboBox()
         self.sort_combo.setObjectName("SortCombo")
@@ -144,7 +144,9 @@ class MainGUIWindow(QMainWindow):
         self.scroll_area.setFixedWidth(900)
         self.scroll_area.setWidgetResizable(True)
         self.scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        self.scroll_area.verticalScrollBar().valueChanged.connect(self.lazy_load_visible_buttons)
+        vertical_scrollbar = self.scroll_area.verticalScrollBar()
+        if vertical_scrollbar:
+            vertical_scrollbar.valueChanged.connect(self.lazy_load_visible_buttons)
 
         scroll_wrapper.addWidget(self.scroll_area)
         main_layout.addLayout(scroll_wrapper)
@@ -160,15 +162,15 @@ class MainGUIWindow(QMainWindow):
         self.stack.addWidget(self.main_screen)
         self.stack.setCurrentWidget(self.main_screen)
 
-    def _init_media(self, movie_folders, show_folders):
-        self.media_buttons = []
-        self.media_lists: dict[type, list[Media]] = {Movie: [], Show: []}
-        self.loading_threads: dict[type, QThread] = {}
-        self.loading_workers: dict[type, LoadMediaWorker] = {}
+    def _init_media(self, movie_folders: list[str], show_folders: list[str]) -> None:
+        self.media_buttons: list[MediaButton] = []
+        self.media_lists: dict[type[Media], list[Media]] = {Movie: [], Show: []}
+        self.loading_threads: dict[type[Media], QThread] = {}
+        self.loading_workers: dict[type[Media], LoadMediaWorker] = {}
 
         self.load_show_movie_lists(movie_folders, show_folders)
 
-    def load_show_movie_lists(self, movie_folders, show_folders):
+    def load_show_movie_lists(self, movie_folders: list[str], show_folders: list[str]) -> None:
         """
         Load the movie and show lists, each in a separate thread
         """
@@ -177,9 +179,9 @@ class MainGUIWindow(QMainWindow):
 
     def _get_media_list_async(
         self,
-        folder_list: list,
-        file_class: Media.__class__,
-    ):
+        folder_list: list[str],
+        file_class: type[Media],
+    ) -> None:
         # Check if we are in the process of loading
         self.loading_spinner.show()
 
@@ -205,7 +207,7 @@ class MainGUIWindow(QMainWindow):
         # Start loading in the background
         self.loading_threads[file_class].start()
 
-    def _on_media_loaded(self, media_list, file_class):
+    def _on_media_loaded(self, media_list: list[Media], file_class: type[Media]) -> None:
         # Update media list
         self.media_lists[file_class] = media_list
 
@@ -232,11 +234,12 @@ class MainGUIWindow(QMainWindow):
 
         self.load_show_movie_lists(self.settings_menu.movie_folders, self.settings_menu.show_folders)
 
-    def update_display(self):
+    def update_display(self) -> None:
         while self.grid_layout.count():
             item = self.grid_layout.takeAt(0)
-            if item.widget():
-                item.widget().deleteLater()
+            widget = item.widget() if item else None
+            if widget:
+                widget.deleteLater()
 
         current_list = self.media_lists[Show if self.list_type_combo.currentText() == "Shows" else Movie]
         current_speed = self.settings_menu.speed_spin.value()
@@ -308,6 +311,10 @@ class MainGUIWindow(QMainWindow):
         year, rating, name, _, length = media._get_values()
         return length, -rating, -year, name.lower()
 
+    def _on_list_type_changed(self) -> None:
+        self.update_display()
+        self.resort_media_list()
+
     def _on_reverse_button_click(self):
         current_icon = UP_ARROW_ICON if self._is_media_list_reversed else DOWN_ARROW_ICON
         self._is_media_list_reversed = not self._is_media_list_reversed
@@ -317,11 +324,15 @@ class MainGUIWindow(QMainWindow):
     def _on_refresh_button_click(self):
         self.load_show_movie_lists(self.settings_menu.movie_folders, self.settings_menu.show_folders)
 
-    def lazy_load_visible_buttons(self):
-        scroll_value = self.scroll_area.verticalScrollBar().value()
+    def lazy_load_visible_buttons(self) -> None:
+        scroll_bar = self.scroll_area.verticalScrollBar()
+        viewport = self.scroll_area.viewport()
+        if not scroll_bar or not viewport:
+            return
+        scroll_value = scroll_bar.value()
 
         # Get scroll area's visible rectangle
-        visible_rect = self.scroll_area.viewport().rect()
+        visible_rect = viewport.rect()
         visible_top = scroll_value
         visible_bottom = scroll_value + visible_rect.height()
 
@@ -334,7 +345,7 @@ class MainGUIWindow(QMainWindow):
             else:
                 button.unload_image()
 
-    def closeEvent(self, event, *args, **kwargs):  # noqa: ARG002
+    def closeEvent(self, event: QCloseEvent | None) -> None:
         new_config = {
             "movie_folders": self.settings_menu.movie_folders,
             "show_folders": self.settings_menu.show_folders,

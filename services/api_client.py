@@ -8,6 +8,10 @@ from requests.exceptions import HTTPError
 from const import RETRY_AMOUNT
 from services.logger import logger
 
+# either just imdb id - e.g tt0133093
+# or tuple of (imdb_id, tvmaze_id) - e.g (tt0944947, 82)
+MediaId = str | tuple[str | None, str | None]
+
 
 class ApiClient(abc.ABC):
     BASE_URL: str
@@ -40,25 +44,25 @@ class ApiClient(abc.ABC):
 
     @classmethod
     @abc.abstractmethod
-    def search_media(cls, title: str) -> str:
+    def search_media(cls, title: str) -> MediaId:
         """
-        Search for a media and return the imdb id
+        Search for a media and return its id
 
         :param title: The title of the media
         :type title: str
-        :return: The imdb media id
-        :rtype: str
+        :return: The media id
+        :rtype: MediaId
         """
         ...
 
     @classmethod
     @abc.abstractmethod
-    def get_media(cls, id: str, **kwargs) -> dict[str, Any]:
+    def get_media(cls, id: MediaId, **kwargs) -> dict[str, Any]:
         """
-        Get a media by it's imdb id
+        Get a media by it's id
 
         :param id: The id of the media
-        :type id: str
+        :type id: MediaId
         :return: The media data
         :rtype: dict [str, any]
         """
@@ -66,12 +70,12 @@ class ApiClient(abc.ABC):
 
     @classmethod
     @abc.abstractmethod
-    def get_poster(cls, id: str, **kwargs) -> Image.Image:
+    def get_poster(cls, id: MediaId, **kwargs) -> Image.Image:
         """
-        Get a media poster by it's imdb id
+        Get a media poster by it's id
 
         :param id: The id of the media
-        :type id: str
+        :type id: MediaId
         :return: The media poster in a 300x440 resolution
         :rtype: Image.Image
         """

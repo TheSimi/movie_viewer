@@ -1,14 +1,14 @@
 import json
 import os
 import sys
-from typing import cast
+from typing import Any, cast
 
 from PIL import Image, ImageDraw, ImageFont
 
 
 def get_resource_path(relative_path: str) -> str:
     if getattr(sys, "frozen", False):
-        base_path = sys._MEIPASS  # pyright: ignore[reportAttributeAccessIssue]
+        base_path = getattr(sys, "_MEIPASS", os.path.dirname(__file__))
     else:
         base_path = os.path.dirname(__file__)
     return os.path.join(base_path, relative_path)
@@ -28,7 +28,7 @@ DEFAULT_VLC_PATH = next(
     None,
 )
 
-DEFAULT_CONFIG = {
+DEFAULT_CONFIG: dict[str, Any] = {
     "movie_folders": [],
     "show_folders": [],
     "media_player": DEFAULT_VLC_PATH,
@@ -47,7 +47,7 @@ MOVIE_FOLDERS: list[str] = CONFIG.get("movie_folders", [])  # pyright: ignore[re
 SHOW_FOLDERS: list[str] = CONFIG.get("show_folders", [])  # pyright: ignore[reportAssignmentType]
 PLAY_SPEED: float = CONFIG.get("speed", 1.0)  # pyright: ignore[reportAssignmentType]
 
-CACHE_DIR = os.path.join(cast(str, os.getenv("LOCALAPPDATA")), "movie_viewer", ".cache")  # type: ignore
+CACHE_DIR = os.path.join(cast(str, os.getenv("LOCALAPPDATA")), "movie_viewer", ".cache")
 CACHE_VERSION = "0.2.2"
 
 MEDIA_PLAYER: str = CONFIG.get("media_player", "vlc")  # pyright: ignore[reportAssignmentType]

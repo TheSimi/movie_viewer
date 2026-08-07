@@ -3,7 +3,7 @@ from typing import Any
 
 from PIL import Image
 
-from services.api_client import ApiClient
+from services.api_client import ApiClient, MediaId
 from services.logger import logger
 
 
@@ -16,7 +16,7 @@ class FmdbClient(ApiClient):
         return cls.get("search", params={"q": title}).json()["description"][0]["#IMDB_ID"]
 
     @classmethod
-    def get_media(cls, id: str, title: str | None = None):
+    def get_media(cls, id: MediaId, title: str | None = None, **kwargs) -> dict[str, Any]:  # noqa: ARG003
         logger.debug(f"[FM-DB] Getting movie with id: {id}")
         data = cls.get("search", params={"tt": id}).json()["short"]
         if title:
@@ -52,7 +52,7 @@ class FmdbClient(ApiClient):
         }
 
     @classmethod
-    def get_poster(cls, id: str):
+    def get_poster(cls, id: MediaId, **kwargs) -> Image.Image:  # noqa: ARG003
         logger.debug(f"[FM-DB] Getting poster for movie with id: {id}")
         response = cls.get(f"/photo/{id}", params={"w": 300, "h": 440})
         return Image.open(io.BytesIO(response.content))

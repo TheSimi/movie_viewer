@@ -1,7 +1,9 @@
 from typing import Any
 
+from PIL import Image
+
 from const import UNKNOWN_POSTER
-from services.api_client import ApiClient
+from services.api_client import ApiClient, MediaId
 from services.fmdb_client import FmdbClient
 from services.imdbdev_client import ImdbdevClient
 from services.logger import logger
@@ -38,7 +40,7 @@ class MovieClient(ApiClient):
             raise
 
     @classmethod
-    def get_media(cls, id: str, title: str | None = None, **kwargs):
+    def get_media(cls, id: MediaId, title: str | None = None, **kwargs) -> dict[str, Any]:
         """
         Fetch media data by ID.
 
@@ -61,20 +63,16 @@ class MovieClient(ApiClient):
         try:
             return ScrapeClient.format_for_movie(ScrapeClient.get_media(id, **kwargs))
         except Exception as e:
-            logger.warning(
-                f"[MovieClient] Failed to scrape data from imdb for {id}: {e.__class__.__name__} | {e}"
-            )
+            logger.warning(f"[MovieClient] Failed to scrape data from imdb for {id}: {e.__class__.__name__} | {e}")
         if title:
             try:
                 return FmdbClient.get_media_by_title(title)
             except Exception as e:
-                logger.warning(
-                    f"[MovieClient] Failed to fetch data for title {title}: {e.__class__.__name__} | {e}"
-                )
+                logger.warning(f"[MovieClient] Failed to fetch data for title {title}: {e.__class__.__name__} | {e}")
         return {}
 
     @classmethod
-    def get_poster(cls, id: str, title: str | None = None, **kwargs):  # noqa: ARG003
+    def get_poster(cls, id: MediaId, title: str | None = None, **kwargs) -> Image.Image:  # noqa: ARG003
         """
         Fetch the poster for a movie by its ID.
 
@@ -94,9 +92,7 @@ class MovieClient(ApiClient):
             try:
                 return FmdbClient.get_poster_by_title(title)
             except Exception as e:
-                logger.warning(
-                    f"[MovieClient] Failed to fetch poster by title {title}: {e.__class__.__name__} | {e}"
-                )
+                logger.warning(f"[MovieClient] Failed to fetch poster by title {title}: {e.__class__.__name__} | {e}")
         try:
             return ImdbdevClient.get_poster(id)
         except Exception as e:
@@ -106,9 +102,7 @@ class MovieClient(ApiClient):
         try:
             return ScrapeClient.get_poster(id)
         except Exception as e:
-            logger.warning(
-                f"[MovieClient] Failed to scrape poster from imdb for {id}: {e.__class__.__name__} | {e}"
-            )
+            logger.warning(f"[MovieClient] Failed to scrape poster from imdb for {id}: {e.__class__.__name__} | {e}")
         return UNKNOWN_POSTER
 
     @classmethod

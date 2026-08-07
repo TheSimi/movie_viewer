@@ -3,7 +3,7 @@ from typing import Any
 
 from PIL import Image
 
-from services.api_client import ApiClient
+from services.api_client import ApiClient, MediaId
 from services.logger import logger
 
 
@@ -22,12 +22,12 @@ class ImdbdevClient(ApiClient):
         return cls.get("search/titles", params={"query": title}).json()["titles"][0]["id"]
 
     @classmethod
-    def get_media(cls, id: str, **kwargs) -> dict[str, Any]:  # noqa: ARG003
+    def get_media(cls, id: MediaId, **kwargs) -> dict[str, Any]:  # noqa: ARG003
         logger.debug(f"[Imdbdev] Getting media with id: {id}")
         return cls.get(f"titles/{id}").json()
 
     @classmethod
-    def get_poster(cls, id: str, **kwargs):  # noqa: ARG003
+    def get_poster(cls, id: MediaId, **kwargs) -> Image.Image:  # noqa: ARG003
         logger.debug(f"[Imdbdev] Getting poster for media with id: {id}")
         poster_url = cls.get_media(id)["primaryImage"]["url"]
         response = cls.session.get(poster_url)

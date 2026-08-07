@@ -1,12 +1,11 @@
 from functools import cached_property
-from typing import cast
+from typing import TYPE_CHECKING, cast
 
 from PIL.ImageQt import ImageQt
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import QObject, Qt
 from PyQt6.QtGui import QPixmap
 from PyQt6.QtWidgets import (
     QLabel,
-    QMainWindow,
     QMenu,
     QMessageBox,
     QPushButton,
@@ -19,6 +18,9 @@ from components.play_window import PlayWindow
 from components.search_window import SearchWindow
 from const import MEDIA_PLAYER
 from media_classes import Media, Movie, Show
+
+if TYPE_CHECKING:
+    from components.main_window import MainGUIWindow
 
 
 class MediaButton(QPushButton):
@@ -80,31 +82,40 @@ class MediaButton(QPushButton):
         context_menu = QMenu(self)
 
         play = context_menu.addAction("Play")
+        assert play is not None
         play.triggered.connect(self._open_play_window)
 
         details = context_menu.addAction("Details")
+        assert details is not None
         details.triggered.connect(self._open_details)
 
         open_in_explorer = context_menu.addAction("Open in files")
+        assert open_in_explorer is not None
         open_in_explorer.triggered.connect(self.media.open_in_explorer)
 
         reload = context_menu.addAction("Reload")
+        assert reload is not None
         reload.triggered.connect(self._del_cache_and_reload)
 
         search = context_menu.addAction("Search Matches")
+        assert search is not None
         search.triggered.connect(self._open_search)
 
         if isinstance(self.media, Show):
             episodes = context_menu.addAction("Episodes")
+            assert episodes is not None
             episodes.triggered.connect(self._open_episodes_window)
 
             rm_show = context_menu.addAction("Delete show")
+            assert rm_show is not None
             rm_show.triggered.connect(self._remove_media)
 
             rm_wached = context_menu.addAction("Delete watched")
+            assert rm_wached is not None
             rm_wached.triggered.connect(self._remove_watched_folder)
         elif isinstance(self.media, Movie):
             rm_movie = context_menu.addAction("Delete movie")
+            assert rm_movie is not None
             rm_movie.triggered.connect(self._remove_media)
         if context_menu.actions():
             context_menu.exec(self.mapToGlobal(pos))
@@ -134,20 +145,22 @@ class MediaButton(QPushButton):
         self.media.delete_cache()
         media_class = Movie if isinstance(self.media, Movie) else Show
         new_media = media_class(self.media.path, id=self.media.id)
-        self.main_window.replace_media(self.media, new_media)  # pyright: ignore[reportAttributeAccessIssue]
+        self.main_window.replace_media(self.media, new_media)
 
     @cached_property
-    def main_window(self) -> QMainWindow:
+    def main_window(self) -> "MainGUIWindow":
         """
         Returns the main window of the application.
 
         :return: The main window instance.
         :rtype: MainGUIWindow
         """
-        current_widget = self
-        while not current_widget.__class__.__name__ == "MainGUIWindow":
+        current_widget: QObject | None = self
+        while current_widget and current_widget.__class__.__name__ != "MainGUIWindow":
             current_widget = current_widget.parent()
-        return current_widget  # pyright: ignore[reportReturnType]
+        if not current_widget:
+            raise RuntimeError("Could not find the main window")
+        return cast("MainGUIWindow", current_widget)
 
     def _get_confirmation(self) -> bool:
         confirmation = QMessageBox.question(
@@ -168,7 +181,7 @@ class MediaButton(QPushButton):
         if not self._get_confirmation():
             return
         self.media.remove_media()
-        self.main_window._on_refresh_button_click()  # pyright: ignore[reportAttributeAccessIssue]
+        self.main_window._on_refresh_button_click()
 
     def load_image(self):
         if not self.image_loaded:

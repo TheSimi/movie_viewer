@@ -1,6 +1,7 @@
 from PyQt6.QtWidgets import QApplication
 
 
-def copy_text(text: str):
+def copy_text(text: str) -> None:
     clipboard = QApplication.clipboard()
-    clipboard.setText(text)
+    if clipboard:
+        clipboard.setText(text)

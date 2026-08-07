@@ -1,3 +1,5 @@
+from typing import TYPE_CHECKING, cast
+
 from PyQt6.QtWidgets import (
     QDialog,
     QHBoxLayout,
@@ -13,6 +15,9 @@ from media_classes.movie import Movie
 from media_classes.show import Show
 from services.movie_client import MovieClient
 from services.show_client import ShowClient
+
+if TYPE_CHECKING:
+    from components.main_window import MainGUIWindow
 
 
 class SearchWindow(QDialog):
@@ -48,11 +53,14 @@ class SearchWindow(QDialog):
             search_result_widget = SearchResult(**result, parent=self)
             self.scroll_content_layout.addWidget(search_result_widget)
 
-    def choose_result(self, imdb_id):
+    def choose_result(self, imdb_id: str) -> None:
         self.media.delete_cache()
         media_class = Movie if isinstance(self.media, Movie) else Show
         new_media = media_class(self.media.path, id=imdb_id)
-        self.parent().replace_media(self.media, new_media)  # pyright: ignore[reportAttributeAccessIssue]
+        parent = self.parent()
+        if parent:
+            main_window = cast("MainGUIWindow", parent)
+            main_window.replace_media(self.media, new_media)
         self.accept()
 
 

@@ -13,8 +13,8 @@ class LoadMediaWorker(QObject):
 
     def __init__(
         self,
-        folder_list: list,
-        file_class: Media.__class__,
+        folder_list: list[str],
+        file_class: type[Media],
         parent: QObject | None = None,
     ) -> None:
         super().__init__(parent)
@@ -23,8 +23,8 @@ class LoadMediaWorker(QObject):
         self.file_class = file_class
         self._is_running = False
 
-    def run(self):
-        media_list = []
+    def run(self) -> None:
+        media_list: list[Media] = []
         for folder in self.folder_list:
             media_list.extend(self.file_class.from_folder(folder))
         self.finished.emit(media_list)

@@ -16,7 +16,7 @@ from selenium.webdriver.chromium.options import ChromiumOptions
 from selenium.webdriver.chromium.webdriver import ChromiumDriver
 from selenium.webdriver.edge.options import Options as EdgeOptions
 
-from services.api_client import ApiClient
+from services.api_client import ApiClient, MediaId
 from services.logger import logger
 
 # A plausible headful chrome UA is required: headless chrome's default UA
@@ -54,13 +54,13 @@ class ScrapeClient(ApiClient):
         return cls.get_search_results(title)[0]["id"]
 
     @classmethod
-    def get_media(cls, id: str, **kwargs) -> dict[str, Any]:  # noqa: ARG003
+    def get_media(cls, id: MediaId, **kwargs) -> dict[str, Any]:  # noqa: ARG003
         logger.debug(f"[Scrape] Getting media with id: {id}")
         html = cls._fetch_html(f"{cls.BASE_URL}/title/{id}/")
         return cls._extract_json_ld(html)
 
     @classmethod
-    def get_poster(cls, id: str, **kwargs) -> Image.Image:  # noqa: ARG003
+    def get_poster(cls, id: MediaId, **kwargs) -> Image.Image:  # noqa: ARG003
         logger.debug(f"[Scrape] Getting poster for media with id: {id}")
         html = cls._fetch_html(f"{cls.BASE_URL}/title/{id}/")
         soup = BeautifulSoup(html, "lxml")
@@ -190,7 +190,7 @@ class ScrapeClient(ApiClient):
             options.add_argument(f"--user-agent={USER_AGENT}")
             options.add_experimental_option("excludeSwitches", ["enable-automation"])
             try:
-                driver = driver_class(options=options)  # pyright: ignore[reportCallIssue]
+                driver = driver_class(options=options)  # type: ignore
                 logger.debug(f"[Scrape] Created headless {browser_name} driver")
                 return driver
             except Exception as e:

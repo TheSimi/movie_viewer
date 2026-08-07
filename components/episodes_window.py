@@ -73,11 +73,12 @@ class EpisodesWindow(QDialog):
 
         self.scroll_content_layout.addStretch()
 
-    def refresh_episodes(self):
+    def refresh_episodes(self) -> None:
         while self.scroll_content_layout.count():
             child = self.scroll_content_layout.takeAt(0)
-            if child.widget():
-                child.widget().deleteLater()
+            widget = child.widget() if child is not None else None
+            if widget:
+                widget.deleteLater()
         self.update_stats()
         self.populate_episodes()
 

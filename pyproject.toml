@@ -18,11 +18,36 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "mypy>=2.3.0",
+    "pre-commit>=4.6.1",
     "ruff>=0.15.9",
 ]
 pyinstaller = [
     "pyinstaller>=6.19.0",
 ]
+
+[tool.mypy]
+python_version = "3.13"
+files = ["."]
+explicit_package_bases = true
+mypy_path = "."
+exclude = [
+    "^dist/",
+    "^build/",
+    "^\\.venv/",
+    "^scripts/",
+]
+check_untyped_defs = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+no_implicit_optional = true
+show_error_codes = true
+pretty = true
+disable_error_code = "import-untyped"
+
+[[tool.mypy.overrides]]
+module = "pyqtwaitingspinner.*"
+ignore_missing_imports = true
 
 [tool.pyright]
 reportOptionalMemberAccess = "none"

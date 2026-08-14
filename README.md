@@ -128,8 +128,8 @@ The program is made using these tools:
 
 The program also uses some free-to use open APIs that don't require keys, these are:
 * **FM-DB API** - default api for movie info. [website](https://imdb.iamidiotareyoutoo.com) [documentation](https://imdb.iamidiotareyoutoo.com/docs/index.html)
-* **TV Maze** - default api for show info. [website](https://www.tvmaze.com) [documentation](https://www.tvmaze.com/api)
-* **Official imdb website** - when all else fails, we try and scrape info from the [official imdb website](https://www.imdb.com) itself
+* **TV Maze** - default api for show info (except for rating). [website](https://www.tvmaze.com) [documentation](https://www.tvmaze.com/api)
+* **Official imdb website** - when all else fails, we try and scrape info from the [official imdb website](https://www.imdb.com) itself, this also provides show ratings, English names and episode counts
 
 ### Running localy
 

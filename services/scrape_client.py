@@ -57,7 +57,9 @@ class ScrapeClient(ApiClient):
     def get_media(cls, id: MediaId, **kwargs) -> dict[str, Any]:  # noqa: ARG003
         logger.debug(f"[Scrape] Getting media with id: {id}")
         html = cls._fetch_html(f"{cls.BASE_URL}/title/{id}/")
-        return cls._extract_json_ld(html)
+        data = cls._extract_json_ld(html)
+        data.update(cls._extract_page_info(html))
+        return data
 
     @classmethod
     def get_poster(cls, id: MediaId, **kwargs) -> Image.Image:  # noqa: ARG003
@@ -115,6 +117,17 @@ class ScrapeClient(ApiClient):
         }
 
     @staticmethod
+    def format_for_show(data: dict[str, Any]) -> dict[str, Any]:
+        return {
+            "name": data["name"],
+            "summary": data.get("description", ""),
+            "rating": {"average": data.get("aggregateRating", {}).get("ratingValue", 0)},
+            "premiered": data.get("datePublished", "0000-00-00"),
+            "episodes": int(data.get("episodes") or 0),
+            "seasons": int(data.get("seasons") or 0),
+        }
+
+    @staticmethod
     def _extract_json_ld(html: str) -> dict[str, Any]:
         soup = BeautifulSoup(html, "lxml")
         for script in soup.find_all("script", {"type": "application/ld+json"}):
@@ -125,6 +138,32 @@ class ScrapeClient(ApiClient):
             if isinstance(data, dict) and data.get("name"):
                 return data
         raise ValueError("Could not find JSON-LD data in page")
+
+    @staticmethod
+    def _extract_page_info(html: str) -> dict[str, Any]:
+        match = re.search(r'<script id="__NEXT_DATA__" type="application/json">(.*?)</script>', html, re.DOTALL)
+        if not match:
+            return {}
+        try:
+            data = json.loads(match.group(1))
+        except json.JSONDecodeError:
+            return {}
+        page_props = data.get("props", {}).get("pageProps", {})
+        above = page_props.get("aboveTheFoldData") or {}
+        info: dict[str, Any] = {}
+        name = above.get("titleText", {}).get("text")
+        if name:
+            info["name"] = name
+        episodes = page_props.get("mainColumnData", {}).get("episodes") or {}
+        total = episodes.get("totalEpisodes", {}).get("total")
+        if total is not None:
+            info["episodes"] = int(total)
+        season_edges = episodes.get("displayableSeasons", {}).get("edges")
+        if season_edges:
+            info["seasons"] = len(season_edges)
+        elif isinstance(episodes.get("seasons"), list):
+            info["seasons"] = len(episodes["seasons"])
+        return info
 
     @staticmethod
     def _iso_duration_to_minutes(duration: str | int | None) -> int:

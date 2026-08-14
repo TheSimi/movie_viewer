@@ -22,11 +22,10 @@ class Show(Media):
         self.plot = re.sub(r"<.*?>", "", self.data.get("summary", ""))
         self.rating = self.data.get("rating", {}).get("average", 0)
         self.year = int(self.data.get("premiered", "0000-00-00").split("-")[0])
-        self.episodes = len(self.data.get("_embedded", {}).get("episodes", []))
-        self.seasons = (
-            max({episode["season"] for episode in self.data.get("_embedded", {}).get("episodes", [])})
-            if self.data.get("_embedded", {}).get("episodes")
-            else 0
+        episode_list = self.data.get("_embedded", {}).get("episodes", [])
+        self.episodes = self.data.get("episodes") or len(episode_list)
+        self.seasons = self.data.get("seasons") or (
+            max({episode["season"] for episode in episode_list}) if episode_list else 0
         )
 
         self.save_to_cache()

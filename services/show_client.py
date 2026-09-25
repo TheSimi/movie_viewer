@@ -12,6 +12,9 @@ class ShowClient(ApiClient):
 
     @classmethod
     def search_media(cls, title: str) -> tuple[str | None, str | None]:
+        # Unlike other methods we use tvmaze by default here
+        # since it returns both the tvmaze id and the imdb id,
+        # and both are needed downstream.
         try:
             tvmaze_id, imdb_id = TvmazeClient.search_media(title)
         except Exception as e:
@@ -32,52 +35,40 @@ class ShowClient(ApiClient):
 
     @classmethod
     def get_media(cls, id: MediaId, **kwargs) -> dict[str, Any]:
-        if isinstance(id, tuple):
-            tvmaze_id, imdb_id = id
-        else:
-            tvmaze_id, imdb_id = id, None
-        tvmaze_data = None
-        imdb_data = None
+        """
+        Fetch show data by ID.
 
-        if tvmaze_id:
-            try:
-                tvmaze_data = TvmazeClient.get_media(tvmaze_id)
-            except Exception as e:
-                logger.warning(
-                    f"[ShowClient] Failed to fetch data using tvmaze for {tvmaze_id}: {e.__class__.__name__} | {e}"
-                )
+        Tries to scrape the data directly from imdb.
+        If it fails, falls back to tvmaze (without its rating,
+        since only imdb ratings are used).
+        When all else fails, returns an empty dict.
+        """
+        tvmaze_id, imdb_id = cls._split_id(id)
 
         if imdb_id:
             try:
-                imdb_data = ScrapeClient.format_for_show(ScrapeClient.get_media(imdb_id, **kwargs))
+                return ScrapeClient.format_for_show(ScrapeClient.get_media(imdb_id, **kwargs))
             except Exception as e:
                 logger.warning(
                     f"[ShowClient] Failed to scrape data from imdb for {imdb_id}: {e.__class__.__name__} | {e}"
                 )
 
-        if tvmaze_data:
-            if imdb_data:
-                tvmaze_data["rating"] = imdb_data.get("rating", 0)
-            else:
-                # TODO: rating is 0 when the imdb rating could not be scraped, might want a better fallback
+        if tvmaze_id:
+            try:
+                tvmaze_data = TvmazeClient.get_media(tvmaze_id)
+                # Only imdb ratings are used, so drop the tvmaze rating.
                 tvmaze_data["rating"] = {"average": 0}
+                return tvmaze_data
+            except Exception as e:
+                logger.warning(
+                    f"[ShowClient] Failed to fetch data using tvmaze for {tvmaze_id}: {e.__class__.__name__} | {e}"
+                )
 
-        return tvmaze_data or imdb_data or {}
+        return {}
 
     @classmethod
     def get_poster(cls, id: MediaId, **kwargs):  # noqa: ARG003
-        if isinstance(id, tuple):
-            tvmaze_id, imdb_id = id
-        else:
-            tvmaze_id, imdb_id = id, None
-
-        if tvmaze_id:
-            try:
-                return TvmazeClient.get_poster(tvmaze_id)
-            except Exception as e:
-                logger.warning(
-                    f"[ShowClient] Failed to fetch poster with tvmaze for {tvmaze_id}: {e.__class__.__name__} | {e}"
-                )
+        tvmaze_id, imdb_id = cls._split_id(id)
 
         if imdb_id:
             try:
@@ -87,16 +78,18 @@ class ShowClient(ApiClient):
                     f"[ShowClient] Failed to scrape poster from imdb for {imdb_id}: {e.__class__.__name__} | {e}"
                 )
 
+        if tvmaze_id:
+            try:
+                return TvmazeClient.get_poster(tvmaze_id)
+            except Exception as e:
+                logger.warning(
+                    f"[ShowClient] Failed to fetch poster with tvmaze for {tvmaze_id}: {e.__class__.__name__} | {e}"
+                )
+
         return UNKNOWN_POSTER
 
     @classmethod
     def get_search_results(cls, title: str) -> list[dict[str, Any]]:
-        try:
-            return TvmazeClient.get_search_results(title)
-        except Exception as e:
-            logger.warning(
-                f"[ShowClient] Failed to fetch search results for {title} with tvmaze: {e.__class__.__name__} | {e}"
-            )
         try:
             scrape_results = ScrapeClient.get_search_results(title)
             for result in scrape_results:
@@ -106,4 +99,18 @@ class ShowClient(ApiClient):
             logger.warning(
                 f"[ShowClient] Failed to scrape search results from imdb for title '{title}': {e.__class__.__name__} | {e}"
             )
+        try:
+            return TvmazeClient.get_search_results(title)
+        except Exception as e:
+            logger.warning(
+                f"[ShowClient] Failed to fetch search results for {title} with tvmaze: {e.__class__.__name__} | {e}"
+            )
             return []
+
+    @staticmethod
+    def _split_id(id: MediaId) -> tuple[str | None, str | None]:
+        if isinstance(id, tuple):
+            return id
+        if isinstance(id, str) and id.startswith("tt"):
+            return None, id
+        return id, None

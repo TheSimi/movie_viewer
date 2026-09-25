@@ -35,9 +35,9 @@ class ScrapeClient(ApiClient):
     """
     A client that scrapes data directly from the imdb website.
 
-    Imdb is protected by an AWS WAF that requires solving a javascript challenge,
-    so pages are fetched with a headless browser using Selenium.
-    Used as a last resort fallback when the free api clients fail.
+    Imdb is protected by an AWS WAF, so pages are fetched with
+    a headless browser using Selenium.
+    Used as the default source for movie and show info.
 
     Poster images are downloaded from m.media-amazon.com, which is not
     protected by the WAF, so plain requests work there.
@@ -47,6 +47,19 @@ class ScrapeClient(ApiClient):
 
     _driver: Any | None = None
     _driver_lock = threading.Lock()
+
+    @classmethod
+    def init_driver_in_backround_thread(cls):
+        thread = threading.Thread(target=cls._init_driver, daemon=True)
+        thread.start()
+
+    @classmethod
+    def _init_driver(cls):
+        try:
+            cls._get_driver()
+            logger.debug("[Scrape] Browser driver ready")
+        except Exception as e:
+            logger.warning(f"[Scrape] Failed to start browser driver at startup: {e.__class__.__name__} | {e}")
 
     @classmethod
     def search_media(cls, title: str) -> str:

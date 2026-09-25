@@ -1,6 +1,6 @@
 import json
 
-from PyQt6.QtCore import QPoint, QSize, Qt, QThread, QTimer
+from PyQt6.QtCore import QPoint, QSize, Qt, QTimer
 from PyQt6.QtGui import QCloseEvent, QIcon
 from PyQt6.QtWidgets import (
     QComboBox,
@@ -28,7 +28,7 @@ from const import (
     UP_ARROW_PATH,
 )
 from media_classes import Media, Movie, Show
-from qt_utils.load_media_worker import LoadMediaWorker
+from qt_utils.load_media_worker import run_in_background
 from services.logger import logger
 from utils.cache_utilis import clean_cache
 
@@ -165,8 +165,7 @@ class MainGUIWindow(QMainWindow):
     def _init_media(self, movie_folders: list[str], show_folders: list[str]) -> None:
         self.media_buttons: list[MediaButton] = []
         self.media_lists: dict[type[Media], list[Media]] = {Movie: [], Show: []}
-        self.loading_threads: dict[type[Media], QThread] = {}
-        self.loading_workers: dict[type[Media], LoadMediaWorker] = {}
+        self.pending_loads: set[type[Media]] = set()
 
         self.load_show_movie_lists(movie_folders, show_folders)
 
@@ -185,43 +184,34 @@ class MainGUIWindow(QMainWindow):
         # Check if we are in the process of loading
         self.loading_spinner.show()
 
-        if self.loading_threads.get(file_class, None) or self.loading_workers.get(file_class, None):
+        if file_class in self.pending_loads:
             logger.warning(f"Already loading {file_class.__name__} list, skipping new load request.")
             return
 
-        # Init worker and thread
-        self.loading_threads[file_class] = QThread()
-        self.loading_workers[file_class] = LoadMediaWorker(folder_list, file_class)
-        self.loading_workers[file_class].moveToThread(self.loading_threads[file_class])
+        # Track the load so the spinner hides once both lists are done
+        self.pending_loads.add(file_class)
 
-        # Connect signals for start and end
-        self.loading_threads[file_class].started.connect(self.loading_workers[file_class].run)
-        self.loading_workers[file_class].finished.connect(
-            lambda media_list: self._on_media_loaded(media_list, file_class)
+        # Load media in the background so the ui does not block
+        run_in_background(
+            lambda: [media for folder in folder_list for media in file_class.from_folder(folder)],
+            lambda media_list: self._on_media_loaded(media_list, file_class),
+            lambda error: self._on_media_load_failed(error, file_class),
         )
-
-        # Clean up thread and worker after finishing
-        self.loading_threads[file_class].finished.connect(self.loading_threads[file_class].deleteLater)
-        self.loading_threads[file_class].finished.connect(lambda: self.loading_threads.pop(file_class, None))
-
-        # Start loading in the background
-        self.loading_threads[file_class].start()
 
     def _on_media_loaded(self, media_list: list[Media], file_class: type[Media]) -> None:
         # Update media list
         self.media_lists[file_class] = media_list
-
-        # Clean up workers
-        self.loading_workers[file_class].deleteLater()
-        self.loading_workers.pop(file_class, None)
-
-        # Close thread
-        self.loading_threads[file_class].quit()
-        self.loading_threads[file_class].wait()
+        self.pending_loads.discard(file_class)
 
         # Update display
         self.resort_media_list()
-        if not self.loading_workers:
+        if not self.pending_loads:
+            self.loading_spinner.hide()
+
+    def _on_media_load_failed(self, error: str, file_class: type[Media]) -> None:
+        logger.warning(f"[MainWindow] Failed to load {file_class.__name__} list: {error.__class__.__name__} - {error}")
+        self.pending_loads.discard(file_class)
+        if not self.pending_loads:
             self.loading_spinner.hide()
 
     def open_settings_menu(self):

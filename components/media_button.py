@@ -18,6 +18,8 @@ from components.play_window import PlayWindow
 from components.search_window import SearchWindow
 from const import MEDIA_PLAYER
 from media_classes import Media, Movie, Show
+from qt_utils.load_media_worker import run_in_background
+from services.logger import logger
 
 if TYPE_CHECKING:
     from components.main_window import MainGUIWindow
@@ -144,8 +146,17 @@ class MediaButton(QPushButton):
     def _del_cache_and_reload(self):
         self.media.delete_cache()
         media_class = Movie if isinstance(self.media, Movie) else Show
-        new_media = media_class(self.media.path, id=self.media.id)
+        run_in_background(
+            lambda: media_class(self.media.path, id=self.media.id),
+            self._on_media_reloaded,
+            self._on_reload_failed,
+        )
+
+    def _on_media_reloaded(self, new_media: Media) -> None:
         self.main_window.replace_media(self.media, new_media)
+
+    def _on_reload_failed(self, error: str) -> None:
+        logger.warning(f"[MediaButton] Failed to reload {self.media.name}: {error.__class__.__name__} - {error}")
 
     @cached_property
     def main_window(self) -> "MainGUIWindow":

@@ -1,6 +1,6 @@
 [project]
 name = "movie-viewer"
-version = "0.3.0"
+version = "0.6.0"
 description = "Watch downloaded movies and shows easly"
 readme = "README.md"
 requires-python = ">=3.13"

@@ -66,12 +66,13 @@ class SearchWindow(QDialog):
             self._on_search_failed,
         )
 
-    def _populate_search_results(self, search_results: list[dict[str, Any]]) -> None:
+    def _populate_search_results(self, search_results: list[Any]) -> None:
         self.status_label.clear()
         if not search_results:
             self.status_label.setText("No results found.")
         for result in search_results:
-            search_result_widget = SearchResult(**result, parent=self)
+            data = result.model_dump() if hasattr(result, "model_dump") else result
+            search_result_widget = SearchResultWidget(**data, parent=self)
             self.scroll_content_layout.addWidget(search_result_widget)
 
     def _on_search_failed(self, error: str) -> None:
@@ -85,7 +86,7 @@ class SearchWindow(QDialog):
         media_class = Movie if isinstance(self.media, Movie) else Show
         self.status_label.setText("Loading media...")
         run_in_background(
-            lambda: media_class(self.media.path, id=imdb_id),
+            lambda: media_class.from_path(self.media.path, id=imdb_id),
             self._on_media_chosen,
             self._on_choose_failed,
         )
@@ -103,7 +104,7 @@ class SearchWindow(QDialog):
         self.status_label.setText(f"Failed to load media: {error}")
 
 
-class SearchResult(QWidget):
+class SearchResultWidget(QWidget):
     def __init__(self, name, year, id, imdb_url, parent=None):
         super().__init__(parent)
         layout = QHBoxLayout(self)

@@ -1,9 +1,11 @@
+import os
 from typing import Any
 
 from PIL import Image
 
 from const import UNKNOWN_POSTER
-from services.api_client import ApiClient, MediaId
+from media_classes.movie import Movie
+from services.api_client import ApiClient, MediaId, SearchResult
 from services.logger import logger
 from services.scrape_client import ScrapeClient
 from services.wikidata_client import WikidataClient
@@ -17,7 +19,7 @@ class MovieClient(ApiClient):
     BASE_URL = "https://www.imdb.com"
 
     @classmethod
-    def search_media(cls, title: str):
+    def search_media(cls, title: str) -> MediaId:
         try:
             return ScrapeClient.search_media(title)
         except Exception as e:
@@ -33,14 +35,9 @@ class MovieClient(ApiClient):
             raise
 
     @classmethod
-    def get_media(cls, id: MediaId, title: str | None = None, **kwargs) -> dict[str, Any]:
+    def fetch_media_data(cls, id: MediaId, title: str | None = None, **kwargs: Any) -> dict[str, Any]:
         """
-        Fetch media data by ID.
-
-        Tries to scrape the data directly from imdb.
-        If it fails, it will try to fetch data from wikidata (without a rating,
-        since only imdb ratings are used).
-        When all else fails, returns an empty dict.
+        Fetch raw media dict (scrape -> wikidata fallback).
         """
         try:
             return ScrapeClient.format_for_movie(ScrapeClient.get_media(id, **kwargs))
@@ -53,7 +50,33 @@ class MovieClient(ApiClient):
         return {}
 
     @classmethod
-    def get_poster(cls, id: MediaId, title: str | None = None, **kwargs) -> Image.Image:  # noqa: ARG003
+    def get_media(cls, id: MediaId, title: str | None = None, path: str = "", **kwargs: Any) -> Movie:
+        """
+        Fetch media by ID and return a validated Movie model.
+
+        :param id: imdb id (e.g tt0133093)
+        :param title: filename-derived title used for fallbacks/search
+        :param path: local filesystem path to embed in the model
+        """
+        data = cls.fetch_media_data(id, title, **kwargs)
+        try:
+            poster = cls.get_poster(id, title=title)
+        except Exception as e:
+            logger.warning(f"[MovieClient] Failed to fetch poster for {id}: {e.__class__.__name__} | {e}")
+            poster = UNKNOWN_POSTER.copy()
+        fallback_name = title or (os.path.splitext(os.path.basename(path))[0] if path else "")
+        return Movie.model_validate(
+            {
+                **data,
+                "path": path,
+                "id": id,
+                "image": poster,
+                "name": data.get("name", fallback_name),
+            }
+        )
+
+    @classmethod
+    def get_poster(cls, id: MediaId, title: str | None = None, **kwargs: Any) -> Image.Image:  # noqa: ARG003
         """
         Fetch the poster for a movie by its ID.
 
@@ -69,18 +92,18 @@ class MovieClient(ApiClient):
             return WikidataClient.get_poster(id, title)
         except Exception as e:
             logger.warning(f"[MovieClient] Failed to fetch poster from wikidata for {id}: {e.__class__.__name__} | {e}")
-        return UNKNOWN_POSTER
+        return UNKNOWN_POSTER.copy()
 
     @classmethod
-    def get_search_results(cls, title: str) -> list[dict[str, Any]]:
+    def get_search_results(cls, title: str) -> list[SearchResult]:
         try:
-            return ScrapeClient.get_search_results(title)
+            return list(ScrapeClient.get_search_results(title))
         except Exception as e:
             logger.warning(
                 f"[MovieClient] Failed to scrape search results from imdb for title '{title}': {e.__class__.__name__} | {e}"
             )
         try:
-            return WikidataClient.get_search_results(title)
+            return list(WikidataClient.get_search_results(title))
         except Exception as e:
             logger.warning(
                 f"[MovieClient] Failed to fetch search results for {title} from wikidata: {e.__class__.__name__} | {e}"

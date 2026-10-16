@@ -16,7 +16,7 @@ from selenium.webdriver.chromium.options import ChromiumOptions
 from selenium.webdriver.chromium.webdriver import ChromiumDriver
 from selenium.webdriver.edge.options import Options as EdgeOptions
 
-from services.api_client import ApiClient, MediaId
+from services.api_client import ApiClient, MediaId, SearchResult
 from services.logger import logger
 
 # A plausible headful chrome UA is required: headless chrome's default UA
@@ -64,7 +64,10 @@ class ScrapeClient(ApiClient):
     @classmethod
     def search_media(cls, title: str) -> str:
         logger.debug(f"[Scrape] Searching for media with title: {title}")
-        return cls.get_search_results(title)[0]["id"]
+        media_id = cls.get_search_results(title)[0].id
+        if not isinstance(media_id, str):
+            raise ValueError(f"Expected an imdb id string from scrape search, got {media_id!r}")
+        return media_id
 
     @classmethod
     def get_media(cls, id: MediaId, **kwargs) -> dict[str, Any]:  # noqa: ARG003
@@ -92,7 +95,7 @@ class ScrapeClient(ApiClient):
         return image.convert("RGB")
 
     @classmethod
-    def get_search_results(cls, title: str) -> list[dict[str, Any]]:
+    def get_search_results(cls, title: str) -> list[SearchResult]:
         logger.debug(f"[Scrape] Getting search results for title: {title}")
         html = cls._fetch_html(f"{cls.BASE_URL}/find/?q={quote(title)}&s=tt&ttype=tt")
         soup = BeautifulSoup(html, "lxml")
@@ -117,7 +120,7 @@ class ScrapeClient(ApiClient):
             )
         if not search_results:
             raise ValueError(f"No results found for title {title}")
-        return search_results
+        return [SearchResult.model_validate(item) for item in search_results]
 
     @staticmethod
     def format_for_movie(data: dict[str, Any]) -> dict[str, Any]:

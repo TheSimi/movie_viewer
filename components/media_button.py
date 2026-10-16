@@ -147,7 +147,7 @@ class MediaButton(QPushButton):
         self.media.delete_cache()
         media_class = Movie if isinstance(self.media, Movie) else Show
         run_in_background(
-            lambda: media_class(self.media.path, id=self.media.id),
+            lambda: media_class.from_path(self.media.path, id=self.media.id),
             self._on_media_reloaded,
             self._on_reload_failed,
         )

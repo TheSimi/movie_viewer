@@ -3,33 +3,70 @@ import os
 import re
 import shutil
 import subprocess
+from typing import Any, ClassVar
+
+from pydantic import Field, field_validator, model_validator
 
 from const import MEDIA_PLAYER, SUBTITLE_EXTENTIONS, VIDEO_EXTENTIONS
 from media_classes.media import Media
 from services.logger import logger
-from services.movie_client import MovieClient
 
 
 class Movie(Media):
-    _KEYS = ["is_file", "name", "plot", "rating", "runtime", "year", "image"]
+    is_file: bool = Field(False)
+    runtime: int = Field(0)
 
-    def __init__(self, path: str, **kwargs):
-        super().__init__(path, client_class=MovieClient, id=kwargs.pop("id", None), **kwargs)
-        if kwargs:
-            return
+    _FIELD_ALIASES: ClassVar[dict[str, str]] = {
+        "plot": "description",
+        "rating": "aggregateRating",
+        "runtime": "duration",
+        "year": "datePublished",
+    }
 
-        self.is_file = os.path.isfile(self.path)
+    @classmethod
+    def _default_client_class(cls) -> Any:
+        from services.movie_client import MovieClient
 
-        self.name = self.data.get("name", os.path.splitext(os.path.basename(self.path))[0])
-        self.plot = self.data.get("description", "")
-        self.rating = self.data.get("aggregateRating", {}).get("ratingValue", 0)
-        try:
-            self.runtime = int(self.data.get("duration", 0))
-        except (TypeError, ValueError):
-            self.runtime = self.get_time_from_string(str(self.data.get("duration", "PT0H0M")))
-        self.year = int(self.data.get("datePublished", "0000-00-00").split("-")[0])
+        return MovieClient
 
-        self.save_to_cache()
+    @model_validator(mode="before")
+    @classmethod
+    def _normalize_movie_input(cls, data: Any) -> Any:
+        if not isinstance(data, dict):
+            return data
+        data = cls._apply_aliases(dict(data))
+        if "is_file" not in data and isinstance(data.get("path"), str):
+            data["is_file"] = os.path.isfile(data["path"])
+        return data
+
+    @field_validator("runtime", mode="before")
+    @classmethod
+    def _validate_runtime(cls, v: Any) -> int:
+        if v is None or v == "" or isinstance(v, bool):
+            return 0
+        if isinstance(v, float):
+            v = int(v)
+        if isinstance(v, int):
+            return v // 60 if v >= 3600 else v
+        return Movie.get_time_from_string(str(v))
+
+    @field_validator("is_file", mode="before")
+    @classmethod
+    def _validate_is_file(cls, v: Any) -> Any:
+        if isinstance(v, (int, float, bool)):
+            return bool(v)
+        return v
+
+    @staticmethod
+    def get_time_from_string(time_string: str) -> int:
+        match = re.search(r"PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?", str(time_string))
+        if not match:
+            return 0
+        hours = int(match.group(1) or 0)
+        minutes = int(match.group(2) or 0)
+        seconds = int(match.group(3) or 0)
+        # Round up when seconds >= 30 (e.g. PT1H30M45S)
+        return (hours * 60) + minutes + (1 if seconds >= 30 else 0)
 
     @classmethod
     def from_folder(cls, dir_path: str) -> list:
@@ -55,7 +92,7 @@ class Movie(Media):
                     if os.path.exists(cache_path):
                         new_instance = cls.from_cache(cache_path)
                     else:
-                        new_instance = cls(full_path)
+                        new_instance = cls.from_path(full_path)
                     media_list.append(new_instance)
                 else:
                     media_list.extend(cls.from_folder(full_path))
@@ -63,28 +100,21 @@ class Movie(Media):
                 if os.path.exists(cache_path):
                     new_instance = cls.from_cache(cache_path)
                 else:
-                    new_instance = cls(full_path)
+                    new_instance = cls.from_path(full_path)
                 media_list.append(new_instance)
 
         return media_list
 
-    def save_to_cache(self):
+    def save_to_cache(self) -> None:
         """
         Saves a media object to cache, creating a cache direcory and saving the image
         and metadata of the movie there
         """
         super().save_to_cache()
         json_path = os.path.join(self.cache_path(self.path), "metadata.json")
-        metadata = {
-            "name": self.name,
-            "path": self.path,
-            "rating": self.rating,
-            "year": self.year,
-            "is_file": self.is_file,
-            "metacritic": 0,  # TODO - remove metacritic
-            "plot": self.plot,
-            "runtime": self.runtime,
-        }
+        metadata = self.model_dump(mode="json")
+        metadata.pop("image", None)
+
         with open(json_path, "w") as f:
             json.dump(metadata, f, indent=2)
 
@@ -99,7 +129,7 @@ class Movie(Media):
         length: int = getattr(self, "runtime", 0)
         return year, rating, name, path, length
 
-    def play(self, media_player: str = MEDIA_PLAYER, speed: float = 1):
+    def play(self, media_player: str = MEDIA_PLAYER, speed: float = 1) -> None:
         """
         Plays the movie with the given media player and speed.
         If the movie is a file - plays the file using the given media player and speed.
@@ -133,7 +163,7 @@ class Movie(Media):
                 first_file = os.path.join(self.path, files_list[0])
                 subprocess.Popen(f'explorer /select,"{first_file}"')
 
-    def _play_folder_with_vlc(self, files_list: list[str], media_player: str, speed: float):
+    def _play_folder_with_vlc(self, files_list: list[str], media_player: str, speed: float) -> None:
         """
         Plays a folder of videos with VLC, using the given media player and speed.
         If there is only one video file in the folder, it will be played with any subtitles file in the folder.
@@ -153,7 +183,7 @@ class Movie(Media):
             command += f"--rate={speed} --play-and-exit"
             subprocess.Popen(command)
 
-    def _play_file_with_subtitles_vlc(self, files_list, media_player, speed, video_file):
+    def _play_file_with_subtitles_vlc(self, files_list: list, media_player: str, speed: float, video_file: str) -> None:
         """
         Plays a single video file with any available subtitle file from the same folder using VLC.
         If there is only one subtitle file, it will be used.
@@ -184,7 +214,7 @@ class Movie(Media):
         command += f"--rate={speed} --play-and-exit"
         subprocess.Popen(command)
 
-    def open_in_explorer(self):
+    def open_in_explorer(self) -> None:
         """
         Opens the movie in the system's default file explorer.
         If the movie is a file - opens the folder containing the file and selects it.
@@ -206,17 +236,8 @@ class Movie(Media):
                 file = self.path
             subprocess.Popen(f'explorer /select,"{file}"')
 
-    def remove_media(self):
+    def remove_media(self) -> None:
         if self.is_file:
             os.remove(self.path)
         else:
             shutil.rmtree(self.path)
-
-    @staticmethod
-    def get_time_from_string(time_string: str):
-        match = re.search(r"PT(?:(\d+)H)?(?:(\d+)M)?", str(time_string))
-        if not match:
-            return 0
-        hours = int(match.group(1) or 0)
-        minutes = int(match.group(2) or 0)
-        return (hours * 60) + minutes

@@ -116,7 +116,7 @@ QComboBox QAbstractItemView {
     color: #cad3f5;
 }
 
-QComboBox#SortCombo
+QComboBox#SortCombo,
 QComboBox#ListTypeCombo {
     font-size: 16px;
 }
@@ -359,7 +359,7 @@ QToolTip {
 }
 
 /* ===== StackedLayout / Layout Containers ===== */
-QWidget#ScrollContent
+QWidget#ScrollContent,
 QWidget#MainScreen {
     background-color: #24273a;
 }

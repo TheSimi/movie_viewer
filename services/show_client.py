@@ -1,7 +1,11 @@
+import os
 from typing import Any
 
+from PIL import Image
+
 from const import UNKNOWN_POSTER
-from services.api_client import ApiClient, MediaId
+from media_classes.show import Show
+from services.api_client import ApiClient, MediaId, SearchResult
 from services.logger import logger
 from services.scrape_client import ScrapeClient
 from services.tvmaze_client import TvmazeClient
@@ -11,7 +15,7 @@ class ShowClient(ApiClient):
     BASE_URL = "https://api.tvmaze.com"
 
     @classmethod
-    def search_media(cls, title: str) -> tuple[str | None, str | None]:
+    def search_media(cls, title: str) -> tuple[str | int | None, str | None]:
         # Unlike other methods we use tvmaze by default here
         # since it returns both the tvmaze id and the imdb id,
         # and both are needed downstream.
@@ -34,14 +38,9 @@ class ShowClient(ApiClient):
         return tvmaze_id, imdb_id
 
     @classmethod
-    def get_media(cls, id: MediaId, **kwargs) -> dict[str, Any]:
+    def fetch_media_data(cls, id: MediaId, **kwargs: Any) -> dict[str, Any]:
         """
-        Fetch show data by ID.
-
-        Tries to scrape the data directly from imdb.
-        If it fails, falls back to tvmaze (without its rating,
-        since only imdb ratings are used).
-        When all else fails, returns an empty dict.
+        Fetch raw show dict (imdb scrape -> tvmaze fallback).
         """
         tvmaze_id, imdb_id = cls._split_id(id)
 
@@ -67,7 +66,29 @@ class ShowClient(ApiClient):
         return {}
 
     @classmethod
-    def get_poster(cls, id: MediaId, **kwargs):  # noqa: ARG003
+    def get_media(cls, id: MediaId, title: str | None = None, path: str = "", **kwargs: Any) -> Show:
+        """
+        Fetch show by ID and return a validated Show model.
+        """
+        data = cls.fetch_media_data(id, **kwargs)
+        try:
+            poster = cls.get_poster(id, **kwargs)
+        except Exception as e:
+            logger.warning(f"[ShowClient] Failed to fetch poster for {id}: {e.__class__.__name__} | {e}")
+            poster = UNKNOWN_POSTER.copy()
+        fallback_name = title or (os.path.splitext(os.path.basename(path))[0] if path else "")
+        return Show.model_validate(
+            {
+                **data,
+                "path": path,
+                "id": id,
+                "image": poster,
+                "name": data.get("name", fallback_name),
+            }
+        )
+
+    @classmethod
+    def get_poster(cls, id: MediaId, **kwargs: Any) -> Image.Image:  # noqa: ARG003
         tvmaze_id, imdb_id = cls._split_id(id)
 
         if imdb_id:
@@ -86,21 +107,22 @@ class ShowClient(ApiClient):
                     f"[ShowClient] Failed to fetch poster with tvmaze for {tvmaze_id}: {e.__class__.__name__} | {e}"
                 )
 
-        return UNKNOWN_POSTER
+        return UNKNOWN_POSTER.copy()
 
     @classmethod
-    def get_search_results(cls, title: str) -> list[dict[str, Any]]:
+    def get_search_results(cls, title: str) -> list[SearchResult]:
         try:
-            scrape_results = ScrapeClient.get_search_results(title)
-            for result in scrape_results:
-                result["id"] = (None, result["id"])
-            return scrape_results
+            results = list(ScrapeClient.get_search_results(title))
+            for result in results:
+                if isinstance(result.id, str):
+                    result.id = (None, result.id)
+            return results
         except Exception as e:
             logger.warning(
                 f"[ShowClient] Failed to scrape search results from imdb for title '{title}': {e.__class__.__name__} | {e}"
             )
         try:
-            return TvmazeClient.get_search_results(title)
+            return list(TvmazeClient.get_search_results(title))
         except Exception as e:
             logger.warning(
                 f"[ShowClient] Failed to fetch search results for {title} with tvmaze: {e.__class__.__name__} | {e}"
@@ -108,9 +130,13 @@ class ShowClient(ApiClient):
             return []
 
     @staticmethod
-    def _split_id(id: MediaId) -> tuple[str | None, str | None]:
+    def _split_id(id: MediaId) -> tuple[str | int | None, str | None]:
         if isinstance(id, tuple):
             return id
+        if isinstance(id, list):
+            first = id[0] if len(id) > 0 else None
+            second = id[1] if len(id) > 1 else None
+            return first, second
         if isinstance(id, str) and id.startswith("tt"):
             return None, id
         return id, None

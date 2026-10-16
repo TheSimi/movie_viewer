@@ -3,7 +3,7 @@ from typing import Any
 
 from PIL import Image
 
-from services.api_client import ApiClient, MediaId
+from services.api_client import ApiClient, MediaId, SearchResult
 from services.logger import logger
 
 
@@ -73,15 +73,17 @@ class FmdbClient(ApiClient):
         return image.convert("RGB")
 
     @classmethod
-    def get_search_results(cls, title: str) -> list[dict[str, Any]]:
+    def get_search_results(cls, title: str) -> list[SearchResult]:
         logger.debug(f"[FM-DB] Getting search results for title: {title}")
         response = cls.get("search", params={"q": title}).json()["description"]
         return [
-            {
-                "name": item.get("#TITLE", ""),
-                "year": item.get("#YEAR", ""),
-                "id": item.get("#IMDB_ID", ""),
-                "imdb_url": item.get("#IMDB_URL", ""),
-            }
+            SearchResult.model_validate(
+                {
+                    "name": item.get("#TITLE", ""),
+                    "year": item.get("#YEAR", ""),
+                    "id": item.get("#IMDB_ID", ""),
+                    "imdb_url": item.get("#IMDB_URL", ""),
+                }
+            )
             for item in response
         ]

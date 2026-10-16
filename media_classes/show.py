@@ -3,32 +3,59 @@ import os
 import re
 import shutil
 import subprocess
+from typing import Any, ClassVar
+
+from pydantic import Field, field_validator, model_validator
 
 from const import MEDIA_PLAYER
 from media_classes.media import Media
 from services.logger import logger
-from services.show_client import ShowClient
 
 
 class Show(Media):
-    _KEYS = ["name", "plot", "rating", "year", "episodes", "seasons", "image"]
+    episodes: int = Field(0)
+    seasons: int = Field(0)
 
-    def __init__(self, path: str, **kwargs):
-        super().__init__(path, client_class=ShowClient, id=kwargs.pop("id", None), **kwargs)
-        if kwargs:
-            return
+    _FIELD_ALIASES: ClassVar[dict[str, str]] = {
+        "plot": "summary",
+        "year": "premiered",
+    }
 
-        self.name = self.data.get("name", os.path.splitext(os.path.basename(self.path))[0])
-        self.plot = re.sub(r"<.*?>", "", self.data.get("summary", ""))
-        self.rating = self.data.get("rating", {}).get("average", 0)
-        self.year = int(self.data.get("premiered", "0000-00-00").split("-")[0])
-        episode_list = self.data.get("_embedded", {}).get("episodes", [])
-        self.episodes = self.data.get("episodes") or len(episode_list)
-        self.seasons = self.data.get("seasons") or (
-            max({episode["season"] for episode in episode_list}) if episode_list else 0
-        )
+    @classmethod
+    def _default_client_class(cls) -> Any:
+        from services.show_client import ShowClient
 
-        self.save_to_cache()
+        return ShowClient
+
+    @model_validator(mode="before")
+    @classmethod
+    def _normalize_show_input(cls, data: Any) -> Any:
+        if not isinstance(data, dict):
+            return data
+        data = cls._apply_aliases(dict(data))
+        # TVMaze nests episodes under _embedded
+        if "episodes" not in data or "seasons" not in data:
+            embedded = data.get("_embedded") or {}
+            episode_list = embedded.get("episodes", []) if isinstance(embedded, dict) else []
+            if "episodes" not in data or data.get("episodes") is None:
+                data["episodes"] = len(episode_list)
+            if "seasons" not in data or data.get("seasons") is None:
+                seasons: set[int] = set()
+                for ep in episode_list:
+                    if isinstance(ep, dict) and isinstance(ep.get("season"), int):
+                        seasons.add(ep["season"])
+                data["seasons"] = max(seasons) if seasons else 0
+        return data
+
+    @field_validator("episodes", "seasons", mode="before")
+    @classmethod
+    def _validate_counts(cls, v: Any) -> int:
+        if v is None or v == "" or isinstance(v, bool):
+            return 0
+        try:
+            return int(v)
+        except (TypeError, ValueError):
+            return 0
 
     @classmethod
     def from_folder(cls, dir_path: str) -> list:
@@ -56,22 +83,15 @@ class Show(Media):
                     if os.path.exists(cache_path):
                         new_instance = cls.from_cache(cache_path)
                     else:
-                        new_instance = cls(full_path)
+                        new_instance = cls.from_path(full_path)
                     show_list.append(new_instance)
         return show_list
 
-    def save_to_cache(self):
+    def save_to_cache(self) -> None:
         super().save_to_cache()
         json_path = os.path.join(self.cache_path(self.path), "metadata.json")
-        metadata = {
-            "name": self.name,
-            "path": self.path,
-            "rating": self.rating,
-            "year": self.year,
-            "plot": self.plot,
-            "episodes": self.episodes,
-            "seasons": self.seasons,
-        }
+        metadata = self.model_dump(mode="json")
+        metadata.pop("image", None)
         with open(json_path, "w") as f:
             json.dump(metadata, f, indent=2)
 
@@ -104,7 +124,7 @@ class Show(Media):
         media_player: str = MEDIA_PLAYER,
         speed: float = 1,
         move_to_watched: bool = True,
-    ):
+    ) -> None:
         episode_path = os.path.join(self.path, episode_name)
         if not os.path.exists(episode_path):
             watched_path = os.path.join(self.path, "watched", episode_name)
@@ -130,7 +150,7 @@ class Show(Media):
             )
             os.startfile(episode_path)
 
-    def toggle_watched(self, episode_name: str):
+    def toggle_watched(self, episode_name: str) -> None:
         episode_in_main = os.path.join(self.path, episode_name)
         episode_in_watched = os.path.join(self.path, "watched", episode_name)
 
@@ -142,7 +162,7 @@ class Show(Media):
             shutil.move(episode_in_main, episode_in_watched)
 
     @staticmethod
-    def _comapare_episodes(episode_name: str):
+    def _comapare_episodes(episode_name: str) -> list[float]:
         episode_name = os.path.splitext(episode_name)[0]
         episode_as_list = re.findall(r"\D+|\d+", episode_name)
         episode_digit_list = []
@@ -162,7 +182,7 @@ class Show(Media):
         length: int = getattr(self, "episodes", 0)
         return year, rating, name, path, length
 
-    def play(self, media_player: str = MEDIA_PLAYER, speed: float = 1):
+    def play(self, media_player: str = MEDIA_PLAYER, speed: float = 1) -> None:
         if self.episode_list:
             if not os.path.exists(os.path.join(self.path, "watched")):
                 os.makedirs(os.path.join(self.path, "watched"))
@@ -190,7 +210,7 @@ class Show(Media):
                 file = self.path
             subprocess.Popen(f'explorer /select,"{file}"')
 
-    def open_in_explorer(self):
+    def open_in_explorer(self) -> None:
         if not os.path.exists(self.path):
             logger.warning(f"Path {self.path} does not exist, cannot open in explorer")
             return
@@ -202,9 +222,9 @@ class Show(Media):
             file = self.path
         subprocess.Popen(f'explorer /select,"{file}"')
 
-    def remove_watched_folder(self):
+    def remove_watched_folder(self) -> None:
         if os.path.exists(os.path.join(self.path, "watched")):
             shutil.rmtree(os.path.join(self.path, "watched"))
 
-    def remove_media(self):
+    def remove_media(self) -> None:
         shutil.rmtree(self.path)

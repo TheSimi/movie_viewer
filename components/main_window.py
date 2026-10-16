@@ -302,7 +302,6 @@ class MainGUIWindow(QMainWindow):
         return length, -rating, -year, name.lower()
 
     def _on_list_type_changed(self) -> None:
-        self.update_display()
         self.resort_media_list()
 
     def _on_reverse_button_click(self):

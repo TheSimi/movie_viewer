@@ -9,7 +9,7 @@ import requests
 from PIL import Image
 from requests import Session
 
-from services.api_client import ApiClient, MediaId
+from services.api_client import ApiClient, MediaId, SearchResult
 from services.logger import logger
 
 try:
@@ -71,7 +71,7 @@ class WikidataClient(ApiClient):
         return image.convert("RGB")
 
     @classmethod
-    def get_search_results(cls, title: str) -> list[dict[str, Any]]:
+    def get_search_results(cls, title: str) -> list[SearchResult]:
         logger.debug(f"[Wikidata] Getting search results for title: {title}")
         search_results = []
         for entity in cls._get_entities(title):
@@ -79,12 +79,14 @@ class WikidataClient(ApiClient):
             if not imdb_id:
                 continue
             search_results.append(
-                {
-                    "name": entity["name"],
-                    "year": entity["year"] or "",
-                    "id": imdb_id,
-                    "imdb_url": f"https://www.imdb.com/title/{imdb_id}",
-                }
+                SearchResult.model_validate(
+                    {
+                        "name": entity["name"],
+                        "year": entity["year"] or "",
+                        "id": imdb_id,
+                        "imdb_url": f"https://www.imdb.com/title/{imdb_id}",
+                    }
+                )
             )
         return search_results
 

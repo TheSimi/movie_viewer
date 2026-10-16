@@ -3,7 +3,7 @@ from typing import Any
 
 from PIL import Image
 
-from services.api_client import ApiClient, MediaId
+from services.api_client import ApiClient, MediaId, SearchResult
 from services.logger import logger
 
 
@@ -11,7 +11,7 @@ class TvmazeClient(ApiClient):
     BASE_URL = "https://api.tvmaze.com"
 
     @classmethod
-    def search_media(cls, title: str) -> tuple[str | None, str | None]:
+    def search_media(cls, title: str) -> tuple[str | int | None, str | None]:
         logger.debug(f"[Tvmaze] Searching for show with title: {title}")
         response = cls.get("/singlesearch/shows", params={"q": title}).json()
         tvmaze_id = response.get("id", None)
@@ -38,7 +38,7 @@ class TvmazeClient(ApiClient):
         return image.convert("RGB")
 
     @classmethod
-    def get_search_results(cls, title: str) -> list[dict[str, Any]]:
+    def get_search_results(cls, title: str) -> list[SearchResult]:
         logger.debug(f"[Tvmaze] Getting search results for title: {title}")
         response = cls.get("/search/shows", params={"q": title}).json()
         search_results = []
@@ -46,11 +46,13 @@ class TvmazeClient(ApiClient):
             info = item["show"]
             year = info["premiered"].split("-")[0] if info["premiered"] else "N/A"
             search_results.append(
-                {
-                    "name": info["name"],
-                    "year": year,
-                    "id": (info["id"], info["externals"]["imdb"]),
-                    "imdb_url": f"https://www.imdb.com/title/{info['externals']['imdb']}",
-                }
+                SearchResult.model_validate(
+                    {
+                        "name": info["name"],
+                        "year": year,
+                        "id": (info["id"], info["externals"]["imdb"]),
+                        "imdb_url": f"https://www.imdb.com/title/{info['externals']['imdb']}",
+                    }
+                )
             )
         return search_results

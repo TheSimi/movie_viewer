@@ -2,15 +2,39 @@ import abc
 from typing import Any
 
 from PIL import Image
+from pydantic import BaseModel, ConfigDict, field_validator
 from requests import Response, Session
 from requests.exceptions import HTTPError
 
 from const import RETRY_AMOUNT
 from services.logger import logger
 
-# either just imdb id - e.g tt0133093
-# or tuple of (tvmaze_id, imdb_id) - e.g (82, tt0944947)
-MediaId = str | tuple[str | None, str | None]
+# either just an imdb id (e.g tt0133093) or a tvmaze id (e.g 82),
+# or a tuple of (tvmaze_id, imdb_id) - e.g (82, tt0944947)
+MediaId = str | int | tuple[str | int | None, str | None] | None
+
+
+class SearchResult(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    name: str = ""
+    year: str = "N/A"
+    id: MediaId = None
+    imdb_url: str = ""
+
+    @field_validator("year", mode="before")
+    @classmethod
+    def _coerce_year(cls, v: Any) -> str:
+        if not v:
+            return "N/A"
+        return str(v)
+
+    @field_validator("id", mode="before")
+    @classmethod
+    def _coerce_id(cls, v: Any) -> MediaId:
+        if isinstance(v, list):
+            return tuple(v)
+        return v
 
 
 class ApiClient(abc.ABC):
@@ -26,7 +50,7 @@ class ApiClient(abc.ABC):
                 raise TypeError(f"Class {cls.__name__} must define 'BASE_URL'")
 
     @classmethod
-    def request(cls, method, url, *args, **kwargs) -> Response:
+    def request(cls, method: str, url: str, *args: Any, **kwargs: Any) -> Response:
         for attempt in range(RETRY_AMOUNT):
             try:
                 full_url = f"{cls.BASE_URL}/{url}"
@@ -39,7 +63,7 @@ class ApiClient(abc.ABC):
         raise Exception(f"Failed to make request to {url} after {RETRY_AMOUNT} attempts")
 
     @classmethod
-    def get(cls, url, *args, **kwargs) -> Response:
+    def get(cls, url: str, *args: Any, **kwargs: Any) -> Response:
         return cls.request("GET", url, *args, **kwargs)
 
     @classmethod
@@ -57,20 +81,18 @@ class ApiClient(abc.ABC):
 
     @classmethod
     @abc.abstractmethod
-    def get_media(cls, id: MediaId, **kwargs) -> dict[str, Any]:
+    def get_media(cls, id: MediaId, **kwargs: Any) -> dict[str, Any] | BaseModel:
         """
-        Get a media by it's id
+        Get a media by its id.
 
-        :param id: The id of the media
-        :type id: MediaId
-        :return: The media data
-        :rtype: dict [str, any]
+        Low-level clients (e.g WikiClient) return raw dicts,
+        High-level ones (e.g MovieClient) return validated Movie/Show models.
         """
         ...
 
     @classmethod
     @abc.abstractmethod
-    def get_poster(cls, id: MediaId, **kwargs) -> Image.Image:
+    def get_poster(cls, id: MediaId, **kwargs: Any) -> Image.Image:
         """
         Get a media poster by it's id
 
@@ -83,17 +105,13 @@ class ApiClient(abc.ABC):
 
     @classmethod
     @abc.abstractmethod
-    def get_search_results(cls, title: str) -> list[dict[str, Any]]:
+    def get_search_results(cls, title: str) -> list[SearchResult]:
         """
         Get search results for a media title
 
         :param title: The title of the media
         :type title: str
-        :return: A list of search results with their data, with these keys:
-            - name: The title of the media
-            - year: The year of release of the media
-            - id: The id of the media
-            - imdb_url: The imdb url of the media
-        :rtype: list [dict [str, any]]
+        :return: A list of validated search results
+        :rtype: list[SearchResult]
         """
         ...

@@ -6,8 +6,9 @@ from PIL import Image
 from const import UNKNOWN_POSTER
 from media_classes.movie import Movie
 from services.api_client import ApiClient, MediaId, SearchResult
+from services.cinemeta_client import CinemetaClient
+from services.imdb_client import IMDbClient
 from services.logger import logger
-from services.scrape_client import ScrapeClient
 from services.wikidata_client import WikidataClient
 
 
@@ -21,11 +22,13 @@ class MovieClient(ApiClient):
     @classmethod
     def search_media(cls, title: str) -> MediaId:
         try:
-            return ScrapeClient.search_media(title)
+            return IMDbClient.search_media(title)
         except Exception as e:
-            logger.warning(
-                f"[MovieClient] Failed to search for movie by scraping imdb with title {title}: {e.__class__.__name__} | {e}"
-            )
+            logger.warning(f"[MovieClient] Failed to search imdb with title {title}: {e.__class__.__name__} | {e}")
+        try:
+            return CinemetaClient.search_media(title, media_type="movie")
+        except Exception as e:
+            logger.warning(f"[MovieClient] Failed to search cinemeta with title {title}: {e.__class__.__name__} | {e}")
         try:
             return WikidataClient.search_media(title)
         except Exception as e:
@@ -37,12 +40,18 @@ class MovieClient(ApiClient):
     @classmethod
     def fetch_media_data(cls, id: MediaId, title: str | None = None, **kwargs: Any) -> dict[str, Any]:
         """
-        Fetch raw media dict (scrape -> wikidata fallback).
+        Fetch raw media dict (imdb -> cinemeta -> wikidata fallback).
         """
         try:
-            return ScrapeClient.format_for_movie(ScrapeClient.get_media(id, **kwargs))
+            return IMDbClient.format_for_movie(IMDbClient.get_media(id, **kwargs))
         except Exception as e:
-            logger.warning(f"[MovieClient] Failed to scrape data from imdb for {id}: {e.__class__.__name__} | {e}")
+            logger.warning(
+                f"[MovieClient] Failed to fetch data direct from imdb for {id}: {e.__class__.__name__} | {e}"
+            )
+        try:
+            return CinemetaClient.get_media(id, title, media_type="movie")
+        except Exception as e:
+            logger.warning(f"[MovieClient] Failed to fetch data from cinemeta for {id}: {e.__class__.__name__} | {e}")
         try:
             return WikidataClient.get_media(id, title)
         except Exception as e:
@@ -76,18 +85,25 @@ class MovieClient(ApiClient):
         )
 
     @classmethod
-    def get_poster(cls, id: MediaId, title: str | None = None, **kwargs: Any) -> Image.Image:  # noqa: ARG003
+    def get_poster(cls, id: MediaId, title: str | None = None, **kwargs: Any) -> Image.Image:
         """
         Fetch the poster for a movie by its ID.
 
-        Tries to scrape it directly from imdb.
-        If it fails, it will try to fetch it from wikidata.
+        Tries to fetch it directly from imdb.
+        If it fails, it will try to fetch it from cinemeta.
+        If that also fails, it'll try to fetch it from wikidata.
         When all else fails, returns a default unknown poster image.
         """
         try:
-            return ScrapeClient.get_poster(id)
+            return IMDbClient.get_poster(id)
         except Exception as e:
-            logger.warning(f"[MovieClient] Failed to scrape poster from imdb for {id}: {e.__class__.__name__} | {e}")
+            logger.warning(
+                f"[MovieClient] Failed to fetch poster direct from imdb for {id}: {e.__class__.__name__} | {e}"
+            )
+        try:
+            return CinemetaClient.get_poster(id, title, media_type="movie")
+        except Exception as e:
+            logger.warning(f"[MovieClient] Failed to fetch poster from cinemeta for {id}: {e.__class__.__name__} | {e}")
         try:
             return WikidataClient.get_poster(id, title)
         except Exception as e:
@@ -95,15 +111,21 @@ class MovieClient(ApiClient):
         return UNKNOWN_POSTER.copy()
 
     @classmethod
-    def get_search_results(cls, title: str) -> list[SearchResult]:
+    def get_search_results(cls, title: str, **kwargs: Any) -> list[SearchResult]:
         try:
-            return list(ScrapeClient.get_search_results(title))
+            return list(IMDbClient.get_search_results(title, **kwargs))
         except Exception as e:
             logger.warning(
-                f"[MovieClient] Failed to scrape search results from imdb for title '{title}': {e.__class__.__name__} | {e}"
+                f"[MovieClient] Failed to fetch search results direct from imdb for title '{title}': {e.__class__.__name__} | {e}"
             )
         try:
-            return list(WikidataClient.get_search_results(title))
+            return list(CinemetaClient.get_search_results(title, media_type="movie", **kwargs))
+        except Exception as e:
+            logger.warning(
+                f"[MovieClient] Failed to fetch search results for {title} from cinemeta: {e.__class__.__name__} | {e}"
+            )
+        try:
+            return list(WikidataClient.get_search_results(title, **kwargs))
         except Exception as e:
             logger.warning(
                 f"[MovieClient] Failed to fetch search results for {title} from wikidata: {e.__class__.__name__} | {e}"

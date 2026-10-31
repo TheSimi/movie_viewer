@@ -10,8 +10,6 @@ Loading a movie/show for the first time takes a little while because info is fet
 
 It is recommended to use this program along with VLC media player. Other media players might partially work but are not currently supported.
 
-A Chrome / Edge / Helium installation is required, since IMDb info is scraped with a headless browser (Selenium). Make sure one of them is installed and up to date.
-
 ## Setup
 
 ### Folder and file setup
@@ -123,9 +121,10 @@ If all your movies / shows are already cached, the program should work just fine
 
 The program fetches info from these sources:
 
-* **Official IMDb website** - the default source for movie and show info, scraped directly from [imdb.com](https://www.imdb.com) with a headless Chrome/Edge browser via Selenium. This is also where posters and ratings come from.
-* **Wikidata** - fallback source for movie info when IMDb scraping fails. [website](https://www.wikidata.org) [documentation](https://www.wikidata.org/wiki/Wikidata:Data_access)
-* **TV Maze** - fallback source for show info when IMDb scraping fails. Show search starts with TV Maze because a single lookup returns both the TV Maze id and the IMDb id. [website](https://www.tvmaze.com) [documentation](https://www.tvmaze.com/api)
+* **Official IMDb JSON APIs** - the default source for movie and show info, fetched directly from [imdb.com](https://www.imdb.com)'s own autocomplete (`v3.sg.media-imdb.com`) and GraphQL (`api.graphql.imdb.com`) endpoints. This is also where posters and ratings come from.
+* **Cinemeta (Stremio)** - fallback source for movie/show info and posters when direct IMDb fails. [website](https://v3-cinemeta.strem.io)
+* **Wikidata** - fallback source for movie info when IMDb and Cinemeta fail. [website](https://www.wikidata.org) [documentation](https://www.wikidata.org/wiki/Wikidata:Data_access)
+* **TV Maze** - fallback source for show info. Show search starts with TV Maze because a single lookup returns both the TV Maze id and the IMDb id. [website](https://www.tvmaze.com) [documentation](https://www.tvmaze.com/api)
 
 Only IMDb ratings are ever shown. When a fallback source is used, the rating is left at `0` instead of showing a non-IMDb rating.
 
@@ -138,9 +137,7 @@ The program is made using these tools:
 * **PyQt6** - the GUI framework
 * **PyInstaller** - to bundle the program into an easy to use `.exe` file
 * **Pillow** - for image loading and editing
-* **Requests** - to fetch info about media from the web
-* **Selenium** - to scrape info from IMDb in a headless browser
-* **BeautifulSoup4 / lxml** - to parse scraped IMDb pages
+* **Requests** - to fetch info about media from the web (IMDb JSON APIs, Cinemeta, Wikidata, TV Maze)
 * **Ruff** - for linting
 * **mypy** - for static type checking
 * **pre-commit** - for running lint and typing checks on commits

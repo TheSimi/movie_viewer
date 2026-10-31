@@ -50,10 +50,10 @@ class ApiClient(abc.ABC):
                 raise TypeError(f"Class {cls.__name__} must define 'BASE_URL'")
 
     @classmethod
-    def request(cls, method: str, url: str, *args: Any, **kwargs: Any) -> Response:
+    def request(cls, method: str, url: str, *args: Any, no_base_url: bool = False, **kwargs: Any) -> Response:
         for attempt in range(RETRY_AMOUNT):
             try:
-                full_url = f"{cls.BASE_URL}/{url}"
+                full_url = url if no_base_url else f"{cls.BASE_URL}/{url}"
                 logger.debug(f"Request Attemp #{attempt + 1}: {method} {full_url}")
                 response = cls.session.request(method, full_url, *args, **kwargs)
                 response.raise_for_status()
@@ -105,7 +105,7 @@ class ApiClient(abc.ABC):
 
     @classmethod
     @abc.abstractmethod
-    def get_search_results(cls, title: str) -> list[SearchResult]:
+    def get_search_results(cls, title: str, **kwargs: Any) -> list[SearchResult]:
         """
         Get search results for a media title
 

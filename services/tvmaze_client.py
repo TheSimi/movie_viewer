@@ -19,12 +19,12 @@ class TvmazeClient(ApiClient):
         return tvmaze_id, imdb_id
 
     @classmethod
-    def get_media(cls, id: MediaId, **kwargs) -> dict[str, Any]:  # noqa: ARG003
+    def get_media(cls, id: MediaId, **kwargs) -> dict[str, Any]:
         logger.debug(f"[Tvmaze] Getting show with id: {id}")
         return cls.get(f"/shows/{id}", params={"embed": "episodes"}).json()
 
     @classmethod
-    def get_poster(cls, id: MediaId, **kwargs) -> Image.Image:  # noqa: ARG003
+    def get_poster(cls, id: MediaId, **kwargs) -> Image.Image:
         logger.debug(f"[Tvmaze] Getting poster for show with id: {id}")
         posters = [i for i in cls.get(f"/shows/{id}/images").json() if i["type"] == "poster"]
         main_posters = [i for i in posters if i["main"]]
@@ -38,7 +38,7 @@ class TvmazeClient(ApiClient):
         return image.convert("RGB")
 
     @classmethod
-    def get_search_results(cls, title: str) -> list[SearchResult]:
+    def get_search_results(cls, title: str, **kwargs: Any) -> list[SearchResult]:
         logger.debug(f"[Tvmaze] Getting search results for title: {title}")
         response = cls.get("/search/shows", params={"q": title}).json()
         search_results = []

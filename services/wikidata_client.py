@@ -46,7 +46,7 @@ class WikidataClient(ApiClient):
         return imdb_id
 
     @classmethod
-    def get_media(cls, id: MediaId, title: str | None = None, **kwargs) -> dict[str, Any]:  # noqa: ARG003
+    def get_media(cls, id: MediaId, title: str | None = None, **kwargs) -> dict[str, Any]:
         logger.debug(f"[Wikidata] Getting movie with id: {id}")
         entity = cls._find_entity(id, title)
         return {
@@ -58,7 +58,7 @@ class WikidataClient(ApiClient):
         }
 
     @classmethod
-    def get_poster(cls, id: MediaId, title: str | None = None, **kwargs) -> Image.Image:  # noqa: ARG003
+    def get_poster(cls, id: MediaId, title: str | None = None, **kwargs) -> Image.Image:
         logger.debug(f"[Wikidata] Getting poster for movie with id: {id}")
         entity = cls._find_entity(id, title)
         if not entity["images"]:
@@ -71,7 +71,7 @@ class WikidataClient(ApiClient):
         return image.convert("RGB")
 
     @classmethod
-    def get_search_results(cls, title: str) -> list[SearchResult]:
+    def get_search_results(cls, title: str, **kwargs: Any) -> list[SearchResult]:
         logger.debug(f"[Wikidata] Getting search results for title: {title}")
         search_results = []
         for entity in cls._get_entities(title):

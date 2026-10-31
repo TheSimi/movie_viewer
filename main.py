@@ -14,7 +14,6 @@ from const import (
     STYLESHEET_PATH,
 )
 from services.logger import logger
-from services.scrape_client import ScrapeClient
 from utils.cache_utilis import cache_version_handler
 
 
@@ -35,8 +34,6 @@ def main():
 
     win = MainGUIWindow(movie_folders=MOVIE_FOLDERS, show_folders=SHOW_FOLDERS)
     win.showMaximized()
-
-    ScrapeClient.init_driver_in_backround_thread()
 
     app.exec()
 

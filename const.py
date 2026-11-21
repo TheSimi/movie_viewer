@@ -42,6 +42,7 @@ else:
     CONFIG = DEFAULT_CONFIG  # pyright: ignore[reportConstantRedefinition]
 
 RETRY_AMOUNT = 5
+RETRY_DELAY = 5.0
 
 MOVIE_FOLDERS: list[str] = CONFIG.get("movie_folders", [])  # pyright: ignore[reportAssignmentType]
 SHOW_FOLDERS: list[str] = CONFIG.get("show_folders", [])  # pyright: ignore[reportAssignmentType]

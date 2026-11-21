@@ -1,4 +1,5 @@
 import abc
+import time
 from typing import Any
 
 from PIL import Image
@@ -6,7 +7,7 @@ from pydantic import BaseModel, ConfigDict, field_validator
 from requests import Response, Session
 from requests.exceptions import HTTPError
 
-from const import RETRY_AMOUNT
+from const import RETRY_AMOUNT, RETRY_DELAY
 from services.logger import logger
 
 # either just an imdb id (e.g tt0133093) or a tvmaze id (e.g 82),
@@ -60,7 +61,21 @@ class ApiClient(abc.ABC):
                 return response
             except HTTPError as e:
                 logger.error(f"Failed to make request to {url}: {e.response.status_code} | {e.response.text}")
+                if e.response.status_code == 429 and attempt < RETRY_AMOUNT - 1:
+                    delay = cls._rate_limit_delay(e.response)
+                    logger.warning(f"Rate limited by {url}, retrying in {delay:.1f} seconds")
+                    time.sleep(delay)
         raise Exception(f"Failed to make request to {url} after {RETRY_AMOUNT} attempts")
+
+    @staticmethod
+    def _rate_limit_delay(response: Response) -> float:
+        retry_after = response.headers.get("Retry-After")
+        if retry_after:
+            try:
+                return max(0.0, min(float(retry_after), 30.0))
+            except ValueError:
+                pass
+        return RETRY_DELAY
 
     @classmethod
     def get(cls, url: str, *args: Any, **kwargs: Any) -> Response:

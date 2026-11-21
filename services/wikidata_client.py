@@ -65,7 +65,7 @@ class WikidataClient(ApiClient):
             raise ValueError(f"Could not find a poster image for {entity['name']} on wikidata")
         file_name = cls._pick_poster(entity["images"])
         url = f"https://commons.wikimedia.org/wiki/Special:FilePath/{quote(file_name.replace(' ', '_'))}?width=300"
-        response = cls.session.get(url, timeout=REQUEST_TIMEOUT)
+        response = cls.get(url, no_base_url=True, timeout=REQUEST_TIMEOUT)
         image = Image.open(io.BytesIO(response.content))
         image.thumbnail((300, 440))
         return image.convert("RGB")
@@ -126,6 +126,7 @@ class WikidataClient(ApiClient):
                 "format": "json",
                 "srsearch": f"{title} haswbstatement:P31=Q11424",
                 "srlimit": MAX_RESULTS,
+                "srqiprofile": "classic",
             },
             timeout=REQUEST_TIMEOUT,
         )
@@ -157,6 +158,7 @@ class WikidataClient(ApiClient):
                 "action": "wbgetentities",
                 "format": "json",
                 "languages": "en",
+                "languagefallback": "1",
                 "props": "labels|claims",
                 "ids": "|".join(ids),
             },
@@ -196,8 +198,9 @@ class WikidataClient(ApiClient):
 
     @classmethod
     def _pick_poster(cls, images: list[str]) -> str:
-        response = cls.session.get(
+        response = cls.get(
             f"{cls.COMMONS_BASE_URL}/api.php",
+            no_base_url=True,
             params={
                 "action": "query",
                 "format": "json",

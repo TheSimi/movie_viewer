@@ -23,6 +23,7 @@ GRAPHQL_HEADERS = {
     "Origin": "https://www.imdb.com",
     "Referer": "https://www.imdb.com/",
     "Accept-Language": "en-US,en;q=0.9",
+    "x-imdb-client-name": "imdb-web-next-localized",
 }
 REQUEST_TIMEOUT = 30
 

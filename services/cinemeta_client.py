@@ -107,7 +107,7 @@ class CinemetaClient(ApiClient):
     @classmethod
     def _fetch_meta(cls, imdb_id: str, media_type: MediaType) -> dict[str, Any]:
         meta = cls.get(f"meta/{media_type}/{imdb_id}.json", timeout=REQUEST_TIMEOUT).json().get("meta")
-        if meta or not meta.get("name"):
+        if not meta or not meta.get("name"):
             raise ValueError(f"Could not fetch cinemeta meta for {imdb_id}")
         return meta
 
